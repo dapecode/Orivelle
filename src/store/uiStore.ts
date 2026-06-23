@@ -88,7 +88,7 @@ export const useUIStore = create<UIStore>()((set,) => ({
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. RECENTLY VIEWED STORE — persisted in localStorage
 //    Stores product IDs only; resolves to full Product objects on demand.
-//    Persistence key kept as 'authentic-girlswear-recent' (no breaking change).
+//    Persistence key kept as 'recent' (no breaking change).
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RecentlyViewedStore {
@@ -132,7 +132,7 @@ export const useRecentlyViewedStore = create<RecentlyViewedStore>()(
           .slice(0, limit);
       },
     }),
-    { name: 'authentic-girlswear-recent' },
+    { name: 'website-recent' },
   ),
 );
 
@@ -196,6 +196,6 @@ export const useWishlistStore = create<WishlistStore>()(
 
       wishlistCount: () => get().wishlistIds.length,
     }),
-    { name: 'authentic-girlswear-wishlist' },
+    { name: 'wishlist' },
   ),
 );

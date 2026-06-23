@@ -98,7 +98,7 @@ export async function validateCoupon(code: string) {
 
 // ===== Cloudinary Image Upload =====
 export async function uploadImage(file: File): Promise<string> {
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dss2bt2fu';
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dpgevafrh';
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'girlswear';
 
   const formData = new FormData();

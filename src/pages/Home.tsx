@@ -43,7 +43,7 @@ const PAGE_DESCRIPTION = BRAND.defaultDescription;
 const CANONICAL = `${DOMAIN}/`;
 
 const OG_IMAGE =
-  'https://res.cloudinary.com/dss2bt2fu/image/upload/f_auto,q_auto,w_1200,h_630,c_fill/girlswear/og-banner.jpg';
+  'https://res.cloudinary.com/dpgevafrh/image/upload/f_auto,q_auto,w_1200,h_630,c_fill/girlswear/og-banner.jpg';
 
 // ─── JSON-LD schemas ──────────────────────────────────────────────────────────
 

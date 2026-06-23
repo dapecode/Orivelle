@@ -10,7 +10,7 @@
 // Required environment variables (set in Vercel Project Settings
 // > Environment Variables, NOT in your .env that ships to the browser):
 //   STRIPE_SECRET_KEY        e.g. sk_test_...
-//   PUBLIC_SITE_URL          e.g. https://girleyglow-seven.vercel.app
+//   PUBLIC_SITE_URL          e.g. https://...........
 // ===================================================
 
 import Stripe from 'stripe';

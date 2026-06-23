@@ -22,6 +22,6 @@ export const useAdminAuthStore = create<AdminAuthStore>()(
 
       setAdmin: (admin) => set({ admin }),
     }),
-    { name: 'authentic-girlswear-admin' },
+    { name: 'website-admin' },
   ),
 );

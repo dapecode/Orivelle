@@ -44,6 +44,6 @@ export const useAdminDataStore = create<AdminDataStore>()(
           ),
         }),
     }),
-    { name: 'authentic-girlswear-admin-data' },
+    { name: 'website-admin-data' },
   ),
 );
