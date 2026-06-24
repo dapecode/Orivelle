@@ -76,13 +76,6 @@ export const SaleHero: React.FC<{
             <div className="relative z-10 px-8 md:px-16 py-8 md:py-10 flex flex-col md:flex-row items-center gap-8">
                 {/* Left: text */}
                 <div className="flex-1 text-center md:text-left">
-                    <div className="inline-flex items-center gap-2 mb-4">
-                        <div className="h-px w-8" style={{ background: '#B07D6B' }} />
-                        <span className="text-[10px] font-semibold tracking-[0.35em] uppercase" style={{ color: '#B07D6B' }}>
-                            Limited Time
-                        </span>
-                        <div className="h-px w-8" style={{ background: '#B07D6B' }} />
-                    </div>
 
                     <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-light mb-4 leading-tight text-white">
                         {banner?.title || 'Sale Collection'}
