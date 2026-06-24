@@ -10,7 +10,7 @@
 //   SSLCOMMERZ_STORE_ID
 //   SSLCOMMERZ_STORE_PASSWORD
 //   SSLCOMMERZ_IS_SANDBOX        'true' while testing, 'false' when live
-//   PUBLIC_SITE_URL              e.g. https://demo-eta-black.vercel.app/
+//   PUBLIC_SITE_URL              e.g. https://orivelle.vercel.app//
 // ===================================================
 
 export default async function handler(req, res) {

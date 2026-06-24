@@ -17,7 +17,7 @@ export const SITE = {
     facebook: 'https://www.facebook.com',
 
     /** Canonical domain (no trailing slash) */
-    domain: 'https://demo-eta-black.vercel.app/',
+    domain: 'https://orivelle.vercel.app//',
 
     /** SEO / meta — derived from brandingConfig so renaming propagates here too */
     defaultTitle: BRAND.defaultTitle,
