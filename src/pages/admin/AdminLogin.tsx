@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Admin Login Page
+   Orivelle - Admin Login Page
    Real Supabase Authentication (no demo credentials)
    =================================================== */
 import { useAdminAuthStore } from '@/store';

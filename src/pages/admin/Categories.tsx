@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Admin Categories Management
+   Orivelle - Admin Categories Management
    Fixed: uploads image to Supabase Storage, saves
    public URL to category.image field in DB
    =================================================== */

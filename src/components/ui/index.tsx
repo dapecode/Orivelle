@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Reusable UI Components
+   Orivelle - Reusable UI Components
    =================================================== */
 
 import React from 'react';

@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Admin Dashboard
+   Orivelle - Admin Dashboard
    Fixed: uses REAL orders instead of fake demo data
    =================================================== */
 

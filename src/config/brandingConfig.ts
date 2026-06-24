@@ -142,7 +142,7 @@ export const BRAND = {
     /** Line 2 of the stacked logo */
     nameBottom: 'Site',
     /** Full single-line name used in copyright, SEO, watermarks */
-    fullName: 'Demo Site',
+    fullName: 'Orivelle',
     /** Short abbreviation — used in localStorage keys */
     shortName: 'DS',
 
@@ -153,13 +153,13 @@ export const BRAND = {
     searchHint: 'dresses, Western tops, Bra, Panties, Slimwear, Lingeries, nightdress, accessories',
 
     /** Default text tiled as watermark on product images */
-    watermarkText: 'Demo Site',
+    watermarkText: 'Orivelle',
 
     // ── SEO ───────────────────────────────────────────────────
     defaultTitle:
-        "Demo Site — Premium Women's Fashion in Bangladesh",
+        "Orivelle — Premium Women's Fashion in Bangladesh",
     defaultDescription:
-        "Shop Demo Site — Bangladesh's premium destination for push-up bras, maternity wear, shapewear, nightwear, couple nightwear, and elegant western dresses. Fast delivery across Bangladesh.",
+        "Shop Orivelle — Bangladesh's premium destination for push-up bras, maternity wear, shapewear, nightwear, couple nightwear, and elegant western dresses. Fast delivery across Bangladesh.",
 
     // ── Assets ────────────────────────────────────────────────
     logoUrl: '/images/logo.png',

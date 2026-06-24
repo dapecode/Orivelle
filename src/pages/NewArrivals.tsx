@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - New Arrivals Page
+   Orivelle - New Arrivals Page
    Dedicated page for the newest collection additions
    =================================================== */
 

@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Elegant Footer (Minimal Layout)
+   Orivelle - Elegant Footer (Minimal Layout)
    =================================================== */
 
 import React, { useEffect, useState } from 'react';

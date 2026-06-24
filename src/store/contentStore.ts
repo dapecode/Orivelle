@@ -74,7 +74,7 @@ export interface SiteSettings {
   youtube: string;
   whatsapp: string;
   messenger: string;
-  /** Twitter / X handle — e.g. "@demo Sites" */
+  /** Twitter / X handle — e.g. "@Orivelles" */
   twitterHandle: string;
 
   // ── Contact ───────────────────────────────────────────────────────────────

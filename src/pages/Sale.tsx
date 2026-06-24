@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Sale Page
+   Orivelle - Sale Page
    Dedicated page for sale / discounted products
    =================================================== */
 

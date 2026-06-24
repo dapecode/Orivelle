@@ -1,5 +1,5 @@
 -- =====================================================
--- Demo Site - Supabase Database Schema
+-- Orivelle - Supabase Database Schema
 -- Run this SQL in your Supabase SQL Editor
 -- =====================================================
 
@@ -328,4 +328,4 @@ INSERT INTO homepage_content (section_key, title, subtitle, button_text, button_
 -- Insert default admin
 -- Password should be hashed via Supabase Auth in production
 INSERT INTO admins (email, name, role) VALUES
-  ('admin@demo Sites.com', 'Admin User', 'super_admin');
+  ('admin@Orivelles.com', 'Admin User', 'super_admin');

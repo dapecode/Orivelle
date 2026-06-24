@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Floating Pill Navbar
+   Orivelle - Floating Pill Navbar
    - Takes ZERO layout space — purely overlays the hero
    - Transparent outside the pill (no white gaps)
    - Full viewport width pill with tiny edge margins

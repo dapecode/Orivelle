@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Admin Content Editor
+   Orivelle - Admin Content Editor
    Adds: hero free-drag component builder, video upload
    (drag-and-drop) for Banner / New Arrival / Sale banners
    =================================================== */

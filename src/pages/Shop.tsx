@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Shop Page
+   Orivelle - Shop Page
    General collection browser with filters & sorting
    =================================================== */
 

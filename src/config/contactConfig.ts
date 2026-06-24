@@ -24,10 +24,10 @@ export const CONTACT = {
     instagram: 'https://www.instagram.com/auntheticgirlswear',
 
     /** Facebook page URL — leave '' to hide icon */
-    facebook: 'https://www.facebook.com/demo Sites',
+    facebook: 'https://www.facebook.com/Orivelles',
 
     /** Facebook Messenger URL — leave '' if unused */
-    messenger: 'https://m.me/demo Sites',
+    messenger: 'https://m.me/Orivelles',
 } as const;
 
 export type ContactConfig = typeof CONTACT;

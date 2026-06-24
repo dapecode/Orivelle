@@ -1,5 +1,5 @@
 /* ===================================================
-   Demo Site - Announcement Bar
+   Orivelle - Announcement Bar
    FIXED VERSION
    - Fully visible on website
    - Works with floating navbar
