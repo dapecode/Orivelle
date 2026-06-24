@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useContentStore } from '@/store/contentStore';
+import { DEFAULT_HERO_LAYOUT, type HeroPosition } from '@/lib/heroLayout';
 
 export const Hero: React.FC = () => {
     const navigate = useNavigate();
@@ -12,6 +13,18 @@ export const Hero: React.FC = () => {
     if (!content.heroEnabled) return null;
 
     const hasImage = !!content.heroImageUrl;
+
+    // Components are only rendered when they have real text — clearing a
+    // field in the admin panel removes it from the live site entirely.
+    const hasTitle = !!content.heroTitle?.trim();
+    const hasSubtitle = !!content.heroSubtitle?.trim();
+    const hasButtons = !!content.heroButtonText?.trim();
+    const extraComponents = (content.heroExtraComponents ?? []).filter(
+        (c) => !!c.content?.trim()
+    );
+    const hasAnyComponent = hasTitle || hasSubtitle || hasButtons || extraComponents.length > 0;
+
+    const layout = content.heroLayout ?? DEFAULT_HERO_LAYOUT;
 
     const buildSrcSet = (url: string): string | undefined => {
         if (!url?.includes('cloudinary.com')) return undefined;
@@ -42,6 +55,16 @@ export const Hero: React.FC = () => {
     const prefersReducedMotion =
         typeof window !== 'undefined' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Converts a saved {x,y} percentage into absolute CSS positioning.
+    // translateY(-50%) keeps the drag handle's vertical center anchored
+    // to the dropped point, matching the admin builder's drag behavior.
+    const positionStyle = (pos: HeroPosition): React.CSSProperties => ({
+        position: 'absolute',
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        transform: 'translateY(-50%)',
+    });
 
     return (
         <section
@@ -84,64 +107,96 @@ export const Hero: React.FC = () => {
                 </div>
             )}
 
-            {/* Hero text content */}
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 w-full">
-                <div className="max-w-3xl">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: prefersReducedMotion ? 0 : 0.8 }}
-                    >
-                        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/30 backdrop-blur-sm text-sm font-medium text-charcoal mb-4">
-                            <Sparkles size={14} className="text-rose-gold" aria-hidden="true" />
-                        </span>
-                    </motion.div>
+            {!hasAnyComponent ? null : (
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 w-full">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/30 backdrop-blur-sm text-sm font-medium text-charcoal mb-4">
+                        <Sparkles size={14} className="text-rose-gold" aria-hidden="true" />
+                    </span>
 
-                    <motion.h1
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.15 }}
-                        className={`heading-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-4 ${hasImage ? 'text-white drop-shadow-lg' : 'text-charcoal'
-                            }`}
-                    >
-                        {content.heroTitle}
-                    </motion.h1>
+                    {/* Free-positioning canvas — children are placed by % coordinates
+                        set in the admin panel's drag-and-drop builder. */}
+                    <div className="relative w-full h-56 sm:h-64 md:h-72 lg:h-80">
+                        {hasTitle && (
+                            <motion.h1
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.15 }}
+                                style={positionStyle(layout.title)}
+                                className={`heading-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] max-w-xl ${hasImage ? 'text-white drop-shadow-lg' : 'text-charcoal'
+                                    }`}
+                            >
+                                {content.heroTitle}
+                            </motion.h1>
+                        )}
 
-                    <motion.p
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.3 }}
-                        className={`text-sm md:text-base max-w-lg mb-6 leading-relaxed ${hasImage ? 'text-white/90 drop-shadow' : 'text-[#6B5B55]'
-                            }`}
-                    >
-                        {content.heroSubtitle}
-                    </motion.p>
+                        {hasSubtitle && (
+                            <motion.p
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.3 }}
+                                style={positionStyle(layout.subtitle)}
+                                className={`text-sm md:text-base max-w-lg leading-relaxed ${hasImage ? 'text-white/90 drop-shadow' : 'text-[#6B5B55]'
+                                    }`}
+                            >
+                                {content.heroSubtitle}
+                            </motion.p>
+                        )}
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.45 }}
-                        className="flex flex-wrap gap-3"
-                    >
-                        <Button
-                            size="md"
-                            onClick={() => navigate('/shop')}
-                            aria-label={content.heroButtonText || 'Shop now'}
-                        >
-                            {content.heroButtonText}
-                            <ArrowRight size={16} aria-hidden="true" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="md"
-                            onClick={() => navigate('/sale')}
-                            aria-label="Shop sale items"
-                        >
-                            Shop Sale
-                        </Button>
-                    </motion.div>
+                        {hasButtons && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: prefersReducedMotion ? 0 : 0.8, delay: prefersReducedMotion ? 0 : 0.45 }}
+                                style={positionStyle(layout.buttons)}
+                                className="flex flex-wrap gap-3"
+                            >
+                                <Button
+                                    size="md"
+                                    onClick={() => navigate('/shop')}
+                                    aria-label={content.heroButtonText || 'Shop now'}
+                                >
+                                    {content.heroButtonText}
+                                    <ArrowRight size={16} aria-hidden="true" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="md"
+                                    onClick={() => navigate('/sale')}
+                                    aria-label="Shop sale items"
+                                >
+                                    Shop Sale
+                                </Button>
+                            </motion.div>
+                        )}
+
+                        {extraComponents.map((comp) => (
+                            <motion.div
+                                key={comp.id}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                style={positionStyle(comp.position)}
+                                className="max-w-sm"
+                            >
+                                {comp.type === 'button' ? (
+                                    <Button
+                                        size="md"
+                                        onClick={() => comp.link && navigate(comp.link)}
+                                    >
+                                        {comp.content}
+                                    </Button>
+                                ) : (
+                                    <p
+                                        className={`text-sm md:text-base leading-relaxed ${hasImage ? 'text-white drop-shadow' : 'text-charcoal'
+                                            }`}
+                                    >
+                                        {comp.content}
+                                    </p>
+                                )}
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </section>
     );
 };

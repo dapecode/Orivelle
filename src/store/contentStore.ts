@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { SITE, siteConfig } from '@/config/siteConfig';
+import type { HeroLayout, HeroExtraComponent } from '@/lib/heroLayout';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,8 @@ export interface Banner {
   buttonLink: string;
   gradient: string;
   imageUrl: string;
+  videoUrl?: string;
+  mediaType?: 'image' | 'video' | 'gradient';
   active: boolean;
 }
 
@@ -99,6 +102,8 @@ export interface ContentData {
   heroSubtitle: string;
   heroButtonText: string;
   heroImageUrl: string;
+  heroLayout?: HeroLayout;
+  heroExtraComponents?: HeroExtraComponent[];
 
   // Banners
   banners: Banner[];

@@ -5,6 +5,11 @@ import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useContentStore } from '@/store/contentStore';
 
+// Falls back to inferring the type from which URL is populated, so older
+// saved banners (created before mediaType existed) still render correctly.
+const getBannerMediaType = (banner: { mediaType?: string; videoUrl?: string; imageUrl?: string }) =>
+    banner.mediaType ?? (banner.videoUrl ? 'video' : banner.imageUrl ? 'image' : 'gradient');
+
 export const BannerSlider: React.FC = () => {
     const [current, setCurrent] = useState(0);
     const { content } = useContentStore();
@@ -26,6 +31,8 @@ export const BannerSlider: React.FC = () => {
     if (banners.length === 0) return null;
 
     const banner = banners[current];
+    const mediaType = getBannerMediaType(banner);
+    const hasDarkBackdrop = mediaType === 'video' || mediaType === 'image';
 
     return (
         <section className="relative overflow-hidden">
@@ -39,27 +46,43 @@ export const BannerSlider: React.FC = () => {
                             exit={{ opacity: 0, x: -100 }}
                             transition={{ duration: 0.6, ease: 'easeInOut' }}
                             className="absolute inset-0 flex items-center"
-                            style={
-                                banner.imageUrl
-                                    ? {
+                        >
+                            {/* Background layer: video > image > gradient */}
+                            {mediaType === 'video' && banner.videoUrl ? (
+                                <video
+                                    key={banner.videoUrl}
+                                    src={banner.videoUrl}
+                                    autoPlay
+                                    muted
+                                    loop
+                                    playsInline
+                                    disablePictureInPicture
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                />
+                            ) : mediaType === 'image' && banner.imageUrl ? (
+                                <div
+                                    className="absolute inset-0"
+                                    style={{
                                         backgroundImage: `url(${banner.imageUrl})`,
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
-                                    }
-                                    : { background: banner.gradient }
-                            }
-                        >
-                            {banner.imageUrl && <div className="absolute inset-0 bg-black/30" />}
+                                    }}
+                                />
+                            ) : (
+                                <div className="absolute inset-0" style={{ background: banner.gradient }} />
+                            )}
+
+                            {hasDarkBackdrop && <div className="absolute inset-0 bg-black/30" />}
 
                             <div className="relative px-8 md:px-16 max-w-xl">
                                 <h3
-                                    className={`heading-serif text-2xl md:text-4xl lg:text-5xl font-bold mb-3 ${banner.imageUrl ? 'text-white drop-shadow-lg' : 'text-charcoal'
+                                    className={`heading-serif text-2xl md:text-4xl lg:text-5xl font-bold mb-3 ${hasDarkBackdrop ? 'text-white drop-shadow-lg' : 'text-charcoal'
                                         }`}
                                 >
                                     {banner.title}
                                 </h3>
                                 <p
-                                    className={`text-sm md:text-base mb-6 ${banner.imageUrl ? 'text-white/90 drop-shadow' : 'text-[#6B5B55]'
+                                    className={`text-sm md:text-base mb-6 ${hasDarkBackdrop ? 'text-white/90 drop-shadow' : 'text-[#6B5B55]'
                                         }`}
                                 >
                                     {banner.subtitle}

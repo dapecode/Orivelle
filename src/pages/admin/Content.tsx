@@ -1,12 +1,20 @@
 /* ===================================================
    Demo Site - Admin Content Editor
-   Fixed: uses saveContent from store, guards undefined messages
+   Adds: hero free-drag component builder, video upload
+   (drag-and-drop) for Banner / New Arrival / Sale banners
    =================================================== */
 
-import React, { useState } from 'react';
-import { Save, Eye, Plus, Trash2, Image, Megaphone, ToggleLeft, ToggleRight } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Save, Eye, Plus, Trash2, Image, Megaphone, ToggleLeft, ToggleRight, Video, Type } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useContentStore, type ContentData } from '@/store/contentStore';
+import {
+  DEFAULT_HERO_LAYOUT,
+  clampHeroPosition,
+  type HeroLayout,
+  type HeroPosition,
+  type HeroExtraComponent,
+} from '@/lib/heroLayout';
 
 const gradients = [
   'linear-gradient(135deg, #F4C2C2, #E6E6FA, #F7E7CE)',
@@ -25,10 +33,31 @@ const announcementColorPresets = [
   { bg: '#D4949E', text: '#FFFFFF', name: 'Dusty Pink' },
 ];
 
-// ── Upload image to Cloudinary ──
-const uploadContentImage = async (
+type BannerMediaType = 'gradient' | 'image' | 'video';
+
+type BannerLike = {
+  id: string;
+
+  title: string;
+  subtitle: string;
+  buttonText: string;
+  buttonLink: string;
+  active: boolean;
+
+  mediaType?: BannerMediaType;
+  imageUrl?: string;
+  videoUrl?: string;
+  gradient: string;
+};
+
+const getBannerMediaType = (banner: BannerLike): BannerMediaType =>
+  banner.mediaType ?? (banner.videoUrl ? 'video' : banner.imageUrl ? 'image' : 'gradient');
+
+// ── Upload image/video to Cloudinary ──
+const uploadContentMedia = async (
   file: File,
-  folder: string
+  folder: string,
+  resourceType: 'image' | 'video' = 'image'
 ): Promise<string> => {
   const formData = new FormData();
 
@@ -42,7 +71,7 @@ const uploadContentImage = async (
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 
   const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
     {
       method: 'POST',
       body: formData,
@@ -58,6 +87,101 @@ const uploadContentImage = async (
   return data.secure_url;
 };
 
+// ── Reusable drag-and-drop media uploader (image or video) ──
+const MediaDropzone: React.FC<{
+  accept: string;
+  isVideo?: boolean;
+  preview?: string;
+  currentUrl?: string;
+  onFile: (file: File) => void;
+  onRemoveCurrent?: () => void;
+}> = ({ accept, isVideo, preview, currentUrl, onFile, onRemoveCurrent }) => {
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) onFile(file);
+  };
+
+  return (
+    <div>
+      <div
+        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        onClick={() => inputRef.current?.click()}
+        className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed rounded-xl py-4 px-3 text-center cursor-pointer transition-colors ${dragOver ? 'border-rose-gold bg-blush-light/40' : 'border-blush/30 bg-white/50 hover:bg-white/70'
+          }`}
+      >
+        {isVideo ? <Video size={16} className="text-[#6B5B55]" /> : <Image size={16} className="text-[#6B5B55]" />}
+        <p className="text-xs text-[#6B5B55]">
+          Drag &amp; drop {isVideo ? 'a video' : 'an image'} here, or click to browse
+        </p>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={e => {
+            const file = e.target.files?.[0];
+            if (file) onFile(file);
+          }}
+        />
+      </div>
+
+      {(preview || currentUrl) && (
+        <div className="mt-2 relative">
+          {isVideo ? (
+            <video
+              src={preview || currentUrl}
+              className="w-full h-24 object-cover rounded-lg border border-blush/30"
+              muted
+              loop
+              autoPlay
+              playsInline
+            />
+          ) : (
+            <img src={preview || currentUrl} alt="" className="w-full h-24 object-cover rounded-lg border border-blush/30" />
+          )}
+          {currentUrl && !preview && onRemoveCurrent && (
+            <button
+              type="button"
+              onClick={onRemoveCurrent}
+              className="absolute top-1 right-1 text-xs bg-white/90 text-red-500 rounded px-2 py-0.5"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Small toggle-button group for choosing banner media type ──
+const MediaTypeToggle: React.FC<{ value: BannerMediaType; onChange: (v: BannerMediaType) => void }> = ({ value, onChange }) => (
+  <div className="grid grid-cols-3 gap-2">
+    {([
+      { key: 'gradient', label: '🎨 Gradient' },
+      { key: 'image', label: '🖼️ Image' },
+      { key: 'video', label: '🎬 Video' },
+    ] as const).map(opt => (
+      <button
+        key={opt.key}
+        type="button"
+        onClick={() => onChange(opt.key)}
+        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${value === opt.key ? 'bg-rose-gold text-white' : 'bg-blush-light/50 text-charcoal hover:bg-blush-light'
+          }`}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+);
+
 export const AdminContent: React.FC = () => {
   const { content, setContent, saveContent } = useContentStore();
   const [saved, setSaved] = useState(false);
@@ -68,17 +192,27 @@ export const AdminContent: React.FC = () => {
   const [heroFile, setHeroFile] = useState<File | null>(null);
   const [heroPreview, setHeroPreview] = useState('');
 
-  // Homepage banner image state
+  // Homepage banner media state
   const [bannerFiles, setBannerFiles] = useState<Record<string, File>>({});
   const [bannerPreviews, setBannerPreviews] = useState<Record<string, string>>({});
+  const [bannerVideoFiles, setBannerVideoFiles] = useState<Record<string, File>>({});
+  const [bannerVideoPreviews, setBannerVideoPreviews] = useState<Record<string, string>>({});
 
-  // New Arrival banner image state
+  // New Arrival banner media state
   const [newArrivalBannerFiles, setNewArrivalBannerFiles] = useState<Record<string, File>>({});
   const [newArrivalBannerPreviews, setNewArrivalBannerPreviews] = useState<Record<string, string>>({});
+  const [newArrivalBannerVideoFiles, setNewArrivalBannerVideoFiles] = useState<Record<string, File>>({});
+  const [newArrivalBannerVideoPreviews, setNewArrivalBannerVideoPreviews] = useState<Record<string, string>>({});
 
-  // sale banner image state
+  // Sale banner media state
   const [saleBannerFiles, setSaleBannerFiles] = useState<Record<string, File>>({});
   const [saleBannerPreviews, setSaleBannerPreviews] = useState<Record<string, string>>({});
+  const [saleBannerVideoFiles, setSaleBannerVideoFiles] = useState<Record<string, File>>({});
+  const [saleBannerVideoPreviews, setSaleBannerVideoPreviews] = useState<Record<string, string>>({});
+
+  // Hero drag-and-drop builder state
+  const heroCanvasRef = useRef<HTMLDivElement>(null);
+  const [draggingHeroId, setDraggingHeroId] = useState<string | null>(null);
 
   // Safe accessor — announcement.messages is always an array after contentStore defaults
   const messages = content.announcement?.messages ?? [];
@@ -86,6 +220,73 @@ export const AdminContent: React.FC = () => {
   const updateField = (field: keyof ContentData, value: unknown) => {
     setContent({ ...content, [field]: value });
   };
+
+  // ── Hero builder helpers ─────────────────────────────────────────────────────
+
+  const heroLayout: HeroLayout = content.heroLayout ?? DEFAULT_HERO_LAYOUT;
+  const heroExtras: HeroExtraComponent[] = content.heroExtraComponents ?? [];
+
+  const updateHeroLayoutKey = (key: keyof HeroLayout, pos: HeroPosition) => {
+    updateField('heroLayout', { ...heroLayout, [key]: clampHeroPosition(pos) });
+  };
+
+  const updateHeroExtra = (id: string, patch: Partial<HeroExtraComponent>) => {
+    updateField(
+      'heroExtraComponents',
+      heroExtras.map(c => (c.id === id ? { ...c, ...patch } : c))
+    );
+  };
+
+  const addHeroExtraComponent = () => {
+    updateField('heroExtraComponents', [
+      ...heroExtras,
+      {
+        id: Date.now().toString(),
+        type: 'text',
+        content: 'New text',
+        position: { x: 50, y: 50 },
+      } as HeroExtraComponent,
+    ]);
+  };
+
+  const removeHeroExtraComponent = (id: string) =>
+    updateField('heroExtraComponents', heroExtras.filter(c => c.id !== id));
+
+  const startHeroDrag = (id: string) => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingHeroId(id);
+  };
+
+  useEffect(() => {
+    if (!draggingHeroId) return;
+
+    const handleMove = (e: PointerEvent) => {
+      const canvas = heroCanvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const pos = clampHeroPosition({
+        x: ((e.clientX - rect.left) / rect.width) * 100,
+        y: ((e.clientY - rect.top) / rect.height) * 100,
+      });
+
+      if (draggingHeroId === 'title' || draggingHeroId === 'subtitle' || draggingHeroId === 'buttons') {
+        updateHeroLayoutKey(draggingHeroId, pos);
+      } else {
+        updateHeroExtra(draggingHeroId, { position: pos });
+      }
+    };
+
+    const handleUp = () => setDraggingHeroId(null);
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draggingHeroId, heroLayout, heroExtras]);
 
   // ── Homepage Banner helpers ──────────────────────────────────────────────────
 
@@ -108,6 +309,8 @@ export const AdminContent: React.FC = () => {
           buttonLink: '/shop',
           gradient: gradients[0],
           imageUrl: '',
+          videoUrl: '',
+          mediaType: 'gradient',
           active: true,
         },
       ],
@@ -138,6 +341,8 @@ export const AdminContent: React.FC = () => {
           buttonLink: '/new-arrivals',
           gradient: gradients[0],
           imageUrl: '',
+          videoUrl: '',
+          mediaType: 'gradient',
           active: true,
         },
       ],
@@ -149,23 +354,12 @@ export const AdminContent: React.FC = () => {
       ...content,
       newArrivalBanners: (content.newArrivalBanners ?? []).filter((_, i) => i !== index),
     });
+
   // ── Sale Banner helpers ───────────────────────────────────────────────
-  const updateSaleBanner = (
-    index: number,
-    field: string,
-    value: string | boolean
-  ) => {
+  const updateSaleBanner = (index: number, field: string, value: string | boolean) => {
     const saleBanners = [...(content.saleBanners ?? [])];
-
-    saleBanners[index] = {
-      ...saleBanners[index],
-      [field]: value,
-    };
-
-    setContent({
-      ...content,
-      saleBanners,
-    });
+    saleBanners[index] = { ...saleBanners[index], [field]: value };
+    setContent({ ...content, saleBanners });
   };
 
   const addSaleBanner = () => {
@@ -181,6 +375,8 @@ export const AdminContent: React.FC = () => {
           buttonLink: '/sale',
           gradient: gradients[0],
           imageUrl: '',
+          videoUrl: '',
+          mediaType: 'gradient',
           active: true,
         },
       ],
@@ -190,10 +386,9 @@ export const AdminContent: React.FC = () => {
   const removeSaleBanner = (index: number) =>
     setContent({
       ...content,
-      saleBanners: (content.saleBanners ?? []).filter(
-        (_, i) => i !== index
-      ),
+      saleBanners: (content.saleBanners ?? []).filter((_, i) => i !== index),
     });
+
   // ── Announcement helpers ─────────────────────────────────────────────────────
 
   const updateAnnouncement = (field: string, value: unknown) => {
@@ -225,70 +420,70 @@ export const AdminContent: React.FC = () => {
     try {
       // Step 1: Upload hero image if selected
       if (heroFile) {
-        const url = await uploadContentImage(heroFile, 'hero');
+        const url = await uploadContentMedia(heroFile, 'hero', 'image');
         updatedContent = { ...updatedContent, heroImageUrl: url };
       }
 
-      // Step 2: Upload homepage banner images
+      // Step 2: Upload homepage banner images + videos
       const updatedBanners = [...updatedContent.banners];
       for (const [bannerId, file] of Object.entries(bannerFiles)) {
-        const url = await uploadContentImage(file, 'banners');
+        const url = await uploadContentMedia(file, 'banners', 'image');
         const idx = updatedBanners.findIndex(b => b.id === bannerId);
         if (idx !== -1) updatedBanners[idx] = { ...updatedBanners[idx], imageUrl: url };
       }
+      for (const [bannerId, file] of Object.entries(bannerVideoFiles)) {
+        const url = await uploadContentMedia(file, 'banners', 'video');
+        const idx = updatedBanners.findIndex(b => b.id === bannerId);
+        if (idx !== -1) updatedBanners[idx] = { ...updatedBanners[idx], videoUrl: url };
+      }
       updatedContent = { ...updatedContent, banners: updatedBanners };
 
-      // Step 3: Upload new arrival banner images
+      // Step 3: Upload new arrival banner images + videos
       const updatedNewArrivalBanners = [...updatedContent.newArrivalBanners];
       for (const [bannerId, file] of Object.entries(newArrivalBannerFiles)) {
-        const url = await uploadContentImage(file, 'new-arrival-banners');
+        const url = await uploadContentMedia(file, 'new-arrival-banners', 'image');
         const idx = updatedNewArrivalBanners.findIndex(b => b.id === bannerId);
         if (idx !== -1) updatedNewArrivalBanners[idx] = { ...updatedNewArrivalBanners[idx], imageUrl: url };
       }
+      for (const [bannerId, file] of Object.entries(newArrivalBannerVideoFiles)) {
+        const url = await uploadContentMedia(file, 'new-arrival-banners', 'video');
+        const idx = updatedNewArrivalBanners.findIndex(b => b.id === bannerId);
+        if (idx !== -1) updatedNewArrivalBanners[idx] = { ...updatedNewArrivalBanners[idx], videoUrl: url };
+      }
       updatedContent = { ...updatedContent, newArrivalBanners: updatedNewArrivalBanners };
 
-      // Step 3: Upload sale banner images
-      const updatedSaleBanners = [
-        ...(updatedContent.saleBanners ?? [])
-      ];
-
-      for (const [bannerId, file] of Object.entries(
-        saleBannerFiles
-      )) {
-        const url = await uploadContentImage(
-          file,
-          'sale-banners'
-        );
-
-        const idx = updatedSaleBanners.findIndex(
-          b => b.id === bannerId
-        );
-
-        if (idx !== -1) {
-          updatedSaleBanners[idx] = {
-            ...updatedSaleBanners[idx],
-            imageUrl: url,
-          };
-        }
+      // Step 4: Upload sale banner images + videos
+      const updatedSaleBanners = [...(updatedContent.saleBanners ?? [])];
+      for (const [bannerId, file] of Object.entries(saleBannerFiles)) {
+        const url = await uploadContentMedia(file, 'sale-banners', 'image');
+        const idx = updatedSaleBanners.findIndex(b => b.id === bannerId);
+        if (idx !== -1) updatedSaleBanners[idx] = { ...updatedSaleBanners[idx], imageUrl: url };
       }
+      for (const [bannerId, file] of Object.entries(saleBannerVideoFiles)) {
+        const url = await uploadContentMedia(file, 'sale-banners', 'video');
+        const idx = updatedSaleBanners.findIndex(b => b.id === bannerId);
+        if (idx !== -1) updatedSaleBanners[idx] = { ...updatedSaleBanners[idx], videoUrl: url };
+      }
+      updatedContent = { ...updatedContent, saleBanners: updatedSaleBanners };
 
-      updatedContent = {
-        ...updatedContent,
-        saleBanners: updatedSaleBanners,
-      };
-
-      // Step 4: Save to Supabase via store (handles upsert + local state update)
+      // Step 5: Save to Supabase via store (handles upsert + local state update)
       await saveContent(updatedContent);
 
-      // Step 5: Clean up local file state
+      // Step 6: Clean up local file state
       setHeroFile(null);
       setHeroPreview('');
       setBannerFiles({});
       setBannerPreviews({});
+      setBannerVideoFiles({});
+      setBannerVideoPreviews({});
       setNewArrivalBannerFiles({});
       setNewArrivalBannerPreviews({});
+      setNewArrivalBannerVideoFiles({});
+      setNewArrivalBannerVideoPreviews({});
       setSaleBannerFiles({});
       setSaleBannerPreviews({});
+      setSaleBannerVideoFiles({});
+      setSaleBannerVideoPreviews({});
 
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -297,13 +492,154 @@ export const AdminContent: React.FC = () => {
       const isStorageError = msg.toLowerCase().includes('upload') || msg.toLowerCase().includes('storage');
       setUploadError(
         isStorageError
-          ? `Image upload failed: ${msg}. Check Supabase bucket permissions.`
+          ? `Media upload failed: ${msg}. Check Supabase/Cloudinary permissions (and that video uploads are enabled on your Cloudinary upload preset).`
           : `Save failed: ${msg}. Check Supabase table permissions for site_content.`,
       );
     } finally {
       setUploading(false);
     }
   };
+
+  // ── Reusable banner-section renderer (used for Banner / New Arrival / Sale) ──
+  const renderBannerSection = (
+    sectionTitle: string,
+    banners: BannerLike[] & { title: string; subtitle: string; buttonText: string; buttonLink: string; active: boolean }[],
+    handlers: {
+      update: (index: number, field: string, value: string | boolean) => void;
+      add: () => void;
+      remove: (index: number) => void;
+    },
+    imagePreviews: Record<string, string>,
+    setImageFiles: React.Dispatch<React.SetStateAction<Record<string, File>>>,
+    setImagePreviews: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+    videoPreviews: Record<string, string>,
+    setVideoFiles: React.Dispatch<React.SetStateAction<Record<string, File>>>,
+    setVideoPreviews: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+  ) => (
+    <div className="glass-card rounded-2xl p-6 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-charcoal">{sectionTitle} ({banners.length} banners)</h3>
+        <Button size="sm" onClick={handlers.add}><Plus size={14} /> Add Banner</Button>
+      </div>
+
+      <div className="space-y-4">
+        {banners.map((banner, index) => {
+          const mediaType = getBannerMediaType(banner);
+          const livePreviewStyle =
+            mediaType === 'video' && (videoPreviews[banner.id] || banner.videoUrl)
+              ? undefined // video shown via <video> tag below, not as a bg-image
+              : mediaType === 'image' && (imagePreviews[banner.id] || banner.imageUrl)
+                ? {
+                  backgroundImage: `url(${imagePreviews[banner.id] || banner.imageUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }
+                : { background: banner.gradient };
+
+          return (
+            <div key={banner.id} className="border border-blush/20 rounded-xl overflow-hidden">
+              <div className="h-20 flex items-center px-6 relative overflow-hidden" style={livePreviewStyle}>
+                {mediaType === 'video' && (videoPreviews[banner.id] || banner.videoUrl) && (
+                  <video
+                    src={videoPreviews[banner.id] || banner.videoUrl}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    muted
+                    loop
+                    autoPlay
+                    playsInline
+                  />
+                )}
+                <div className="relative flex-1 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1">
+                  <p className="font-medium text-charcoal text-sm">{banner.title}</p>
+                  <p className="text-xs text-[#6B5B55]">{banner.subtitle.substring(0, 50)}</p>
+                </div>
+                <button onClick={() => handlers.remove(index)} className="relative p-1.5 rounded-lg hover:bg-white/50 ml-2">
+                  <Trash2 size={14} className="text-red-400" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input label="Title" value={banner.title} onChange={e => handlers.update(index, 'title', e.target.value)} />
+                  <Input label="Button Text" value={banner.buttonText} onChange={e => handlers.update(index, 'buttonText', e.target.value)} />
+                  <Input label="Button Link" value={banner.buttonLink} onChange={e => handlers.update(index, 'buttonLink', e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Subtitle</label>
+                  <input
+                    value={banner.subtitle}
+                    onChange={e => handlers.update(index, 'subtitle', e.target.value)}
+                    className="w-full px-4 py-2 rounded-xl border border-blush/30 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-rose-gold/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Background Media</label>
+                  <MediaTypeToggle
+                    value={mediaType}
+                    onChange={v => handlers.update(index, 'mediaType', v)}
+                  />
+                </div>
+
+                {mediaType === 'image' && (
+                  <MediaDropzone
+                    accept="image/*"
+                    currentUrl={banner.imageUrl}
+                    preview={imagePreviews[banner.id]}
+                    onFile={file => {
+                      setImageFiles(prev => ({ ...prev, [banner.id]: file }));
+                      setImagePreviews(prev => ({ ...prev, [banner.id]: URL.createObjectURL(file) }));
+                    }}
+                    onRemoveCurrent={() => handlers.update(index, 'imageUrl', '')}
+                  />
+                )}
+
+                {mediaType === 'video' && (
+                  <MediaDropzone
+                    accept="video/*"
+                    isVideo
+                    currentUrl={banner.videoUrl}
+                    preview={videoPreviews[banner.id]}
+                    onFile={file => {
+                      setVideoFiles(prev => ({ ...prev, [banner.id]: file }));
+                      setVideoPreviews(prev => ({ ...prev, [banner.id]: URL.createObjectURL(file) }));
+                    }}
+                    onRemoveCurrent={() => handlers.update(index, 'videoUrl', '')}
+                  />
+                )}
+
+                {mediaType === 'gradient' && (
+                  <div>
+                    <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Gradient</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {gradients.map(g => (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => handlers.update(index, 'gradient', g)}
+                          className={`w-12 h-8 rounded-lg border-2 ${banner.gradient === g ? 'border-rose-gold' : 'border-transparent'}`}
+                          style={{ background: g }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={banner.active} onChange={e => handlers.update(index, 'active', e.target.checked)} className="w-4 h-4 rounded accent-rose-gold" />
+                  <span className="text-sm text-charcoal">Active (show on website)</span>
+                </label>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-[#6B5B55] mt-4">
+        💡 Click <strong>Save Changes</strong> to upload media and apply all edits to the website.
+      </p>
+    </div>
+  );
 
   return (
     <div>
@@ -506,25 +842,118 @@ export const AdminContent: React.FC = () => {
           </div>
         </div>
 
-        {/* Hero Live Preview */}
-        <div
-          className="mt-4 rounded-xl overflow-hidden h-32 flex items-center justify-center relative"
-          style={
-            heroPreview || content.heroImageUrl
-              ? { backgroundImage: `url(${heroPreview || content.heroImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-              : { background: 'linear-gradient(135deg, #F4C2C2, #E6E6FA, #F7E7CE)' }
-          }
-        >
-          {!content.heroEnabled && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
-              <p className="text-white text-sm font-medium">Hero is hidden on website</p>
+        {/* ── Hero Component Builder ──────────────────────────────────────────
+            Drag the chips below to reposition Title / Subtitle / Buttons
+            anywhere on the hero. A chip only appears here — and on the live
+            site — when its matching field above actually has text. */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium text-[#6B5B55]">
+              Component Placement <span className="text-[#6B5B55]/70">(drag to position)</span>
+            </label>
+            <Button size="sm" onClick={addHeroExtraComponent}><Plus size={12} /> Add Component</Button>
+          </div>
+
+          <div
+            ref={heroCanvasRef}
+            className="relative w-full h-64 rounded-xl overflow-hidden border border-blush/30 select-none touch-none"
+            style={
+              heroPreview || content.heroImageUrl
+                ? { backgroundImage: `url(${heroPreview || content.heroImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                : { background: 'linear-gradient(135deg, #F4C2C2, #E6E6FA, #F7E7CE)' }
+            }
+          >
+            {!content.heroEnabled && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                <p className="text-white text-sm font-medium">Hero is hidden on website</p>
+              </div>
+            )}
+
+            {content.heroTitle?.trim() && (
+              <div
+                onPointerDown={startHeroDrag('title')}
+                style={{ left: `${heroLayout.title.x}%`, top: `${heroLayout.title.y}%`, transform: 'translate(0, -50%)' }}
+                className="absolute cursor-move px-2 py-1 rounded bg-rose-gold/90 text-white text-xs font-semibold whitespace-nowrap shadow"
+              >
+                Title
+              </div>
+            )}
+            {content.heroSubtitle?.trim() && (
+              <div
+                onPointerDown={startHeroDrag('subtitle')}
+                style={{ left: `${heroLayout.subtitle.x}%`, top: `${heroLayout.subtitle.y}%`, transform: 'translate(0, -50%)' }}
+                className="absolute cursor-move px-2 py-1 rounded bg-rose-gold/70 text-white text-xs font-semibold whitespace-nowrap shadow"
+              >
+                Subtitle
+              </div>
+            )}
+            {content.heroButtonText?.trim() && (
+              <div
+                onPointerDown={startHeroDrag('buttons')}
+                style={{ left: `${heroLayout.buttons.x}%`, top: `${heroLayout.buttons.y}%`, transform: 'translate(0, -50%)' }}
+                className="absolute cursor-move px-2 py-1 rounded bg-charcoal/80 text-white text-xs font-semibold whitespace-nowrap shadow"
+              >
+                Buttons
+              </div>
+            )}
+
+            {heroExtras.map(comp => (
+              <div
+                key={comp.id}
+                onPointerDown={startHeroDrag(comp.id)}
+                style={{ left: `${comp.position.x}%`, top: `${comp.position.y}%`, transform: 'translate(0, -50%)' }}
+                className="absolute cursor-move flex items-center gap-1 px-2 py-1 rounded bg-white/90 border border-blush/40 text-charcoal text-xs whitespace-nowrap shadow"
+              >
+                {comp.type === 'button' ? <Type size={10} /> : <Type size={10} />}
+                {comp.content.substring(0, 16) || 'Empty'}
+                <button
+                  type="button"
+                  onPointerDown={e => e.stopPropagation()}
+                  onClick={() => removeHeroExtraComponent(comp.id)}
+                  className="ml-1 text-red-400 hover:text-red-600"
+                >
+                  <Trash2 size={10} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {heroExtras.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {heroExtras.map(comp => (
+                <div key={comp.id} className="flex items-center gap-2">
+                  <select
+                    value={comp.type}
+                    onChange={e => updateHeroExtra(comp.id, { type: e.target.value as 'text' | 'button' })}
+                    className="px-2 py-2 rounded-lg border border-blush/30 bg-white/80 text-sm"
+                  >
+                    <option value="text">Text</option>
+                    <option value="button">Button</option>
+                  </select>
+                  <input
+                    value={comp.content}
+                    onChange={e => updateHeroExtra(comp.id, { content: e.target.value })}
+                    placeholder={comp.type === 'button' ? 'Button label' : 'Text content'}
+                    className="flex-1 px-3 py-2 rounded-lg border border-blush/30 bg-white/80 text-sm"
+                  />
+                  {comp.type === 'button' && (
+                    <input
+                      value={comp.link ?? ''}
+                      onChange={e => updateHeroExtra(comp.id, { link: e.target.value })}
+                      placeholder="/link-target"
+                      className="flex-1 px-3 py-2 rounded-lg border border-blush/30 bg-white/80 text-sm"
+                    />
+                  )}
+                  <button onClick={() => removeHeroExtraComponent(comp.id)} className="p-2 rounded-lg hover:bg-red-50">
+                    <Trash2 size={14} className="text-red-400" />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
-          <div className="text-center bg-white/40 backdrop-blur-sm rounded-xl px-4 py-2">
-            <p className="heading-serif text-lg font-bold text-charcoal">{content.heroTitle}</p>
-            <p className="text-xs text-[#6B5B55]">{content.heroSubtitle?.substring(0, 60)}...</p>
-            <p className="text-xs font-medium text-rose-gold mt-1">{content.heroButtonText}</p>
-          </div>
+          <p className="text-xs text-[#6B5B55] mt-2">
+            💡 Clearing Hero Title / Subtitle / Button Text above removes that chip here — and hides it on the live site.
+          </p>
         </div>
       </div>
 
@@ -542,284 +971,31 @@ export const AdminContent: React.FC = () => {
       </div>
 
       {/* ── Banner Slider ────────────────────────────────────────────────────── */}
-      <div className="glass-card rounded-2xl p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-charcoal">Banner Slider ({(content.banners ?? []).length} banners)</h3>
-          <Button size="sm" onClick={addBanner}><Plus size={14} /> Add Banner</Button>
-        </div>
-
-        <div className="space-y-4">
-          {(content.banners ?? []).map((banner, index) => (
-            <div key={banner.id} className="border border-blush/20 rounded-xl overflow-hidden">
-              <div
-                className="h-20 flex items-center px-6 relative"
-                style={
-                  bannerPreviews[banner.id]
-                    ? { backgroundImage: `url(${bannerPreviews[banner.id]})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                    : banner.imageUrl
-                      ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                      : { background: banner.gradient }
-                }
-              >
-                <div className="flex-1 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1">
-                  <p className="font-medium text-charcoal text-sm">{banner.title}</p>
-                  <p className="text-xs text-[#6B5B55]">{banner.subtitle.substring(0, 50)}</p>
-                </div>
-                <button onClick={() => removeBanner(index)} className="p-1.5 rounded-lg hover:bg-white/50 ml-2">
-                  <Trash2 size={14} className="text-red-400" />
-                </button>
-              </div>
-
-              <div className="p-4 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Title" value={banner.title} onChange={e => updateBanner(index, 'title', e.target.value)} />
-                  <Input label="Button Text" value={banner.buttonText} onChange={e => updateBanner(index, 'buttonText', e.target.value)} />
-                  <Input label="Button Link" value={banner.buttonLink} onChange={e => updateBanner(index, 'buttonLink', e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Subtitle</label>
-                  <input
-                    value={banner.subtitle}
-                    onChange={e => updateBanner(index, 'subtitle', e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-blush/30 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-rose-gold/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-[#6B5B55] mb-1.5 flex items-center gap-1.5">
-                    <Image size={14} /> Banner Background Image (overrides gradient)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={e => {
-                      const file = e.target.files?.[0] || null;
-                      if (file) {
-                        setBannerFiles(prev => ({ ...prev, [banner.id]: file }));
-                        setBannerPreviews(prev => ({ ...prev, [banner.id]: URL.createObjectURL(file) }));
-                      }
-                    }}
-                    className="w-full text-sm text-[#6B5B55] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-blush-light file:text-charcoal hover:file:bg-blush cursor-pointer"
-                  />
-                  {banner.imageUrl && !bannerPreviews[banner.id] && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <img src={banner.imageUrl} alt="" className="w-16 h-8 object-cover rounded-lg border border-blush/30" />
-                      <p className="text-xs text-[#6B5B55]">Current image</p>
-                      <button type="button" onClick={() => updateBanner(index, 'imageUrl', '')} className="text-xs text-red-400 hover:text-red-600">Remove</button>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Gradient (used if no image)</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {gradients.map(g => (
-                      <button key={g} type="button" onClick={() => updateBanner(index, 'gradient', g)} className={`w-12 h-8 rounded-lg border-2 ${banner.gradient === g ? 'border-rose-gold' : 'border-transparent'}`} style={{ background: g }} />
-                    ))}
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={banner.active} onChange={e => updateBanner(index, 'active', e.target.checked)} className="w-4 h-4 rounded accent-rose-gold" />
-                  <span className="text-sm text-charcoal">Active (show on website)</span>
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-xs text-[#6B5B55] mt-4">
-          💡 Click <strong>Save Changes</strong> to upload images and apply all edits to the website.
-        </p>
-      </div>
+      {renderBannerSection(
+        'Banner Slider',
+        (content.banners ?? []) as any,
+        { update: updateBanner, add: addBanner, remove: removeBanner },
+        bannerPreviews, setBannerFiles, setBannerPreviews,
+        bannerVideoPreviews, setBannerVideoFiles, setBannerVideoPreviews,
+      )}
 
       {/* ── New Arrival Page Banners ─────────────────────────────────────────── */}
-      <div className="glass-card rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-charcoal">
-            New Arrival Page Banners ({(content.newArrivalBanners ?? []).length} banners)
-          </h3>
-          <Button size="sm" onClick={addNewArrivalBanner}><Plus size={14} /> Add Banner</Button>
-        </div>
+      {renderBannerSection(
+        'New Arrival Page Banners',
+        (content.newArrivalBanners ?? []) as any,
+        { update: updateNewArrivalBanner, add: addNewArrivalBanner, remove: removeNewArrivalBanner },
+        newArrivalBannerPreviews, setNewArrivalBannerFiles, setNewArrivalBannerPreviews,
+        newArrivalBannerVideoPreviews, setNewArrivalBannerVideoFiles, setNewArrivalBannerVideoPreviews,
+      )}
 
-        <div className="space-y-4">
-          {(content.newArrivalBanners ?? []).map((banner, index) => (
-            <div key={banner.id} className="border border-blush/20 rounded-xl overflow-hidden">
-              <div
-                className="h-20 flex items-center px-6 relative"
-                style={
-                  newArrivalBannerPreviews[banner.id]
-                    ? { backgroundImage: `url(${newArrivalBannerPreviews[banner.id]})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                    : banner.imageUrl
-                      ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                      : { background: banner.gradient }
-                }
-              >
-                <div className="flex-1 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1">
-                  <p className="font-medium text-charcoal text-sm">{banner.title}</p>
-                  <p className="text-xs text-[#6B5B55]">{banner.subtitle.substring(0, 50)}</p>
-                </div>
-                <button onClick={() => removeNewArrivalBanner(index)} className="p-1.5 rounded-lg hover:bg-white/50 ml-2">
-                  <Trash2 size={14} className="text-red-400" />
-                </button>
-              </div>
-
-              <div className="p-4 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Title" value={banner.title} onChange={e => updateNewArrivalBanner(index, 'title', e.target.value)} />
-                  <Input label="Button Text" value={banner.buttonText} onChange={e => updateNewArrivalBanner(index, 'buttonText', e.target.value)} />
-                  <Input label="Button Link" value={banner.buttonLink} onChange={e => updateNewArrivalBanner(index, 'buttonLink', e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Subtitle</label>
-                  <input
-                    value={banner.subtitle}
-                    onChange={e => updateNewArrivalBanner(index, 'subtitle', e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-blush/30 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-rose-gold/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-[#6B5B55] mb-1.5 flex items-center gap-1.5">
-                    <Image size={14} /> Banner Background Image (overrides gradient)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={e => {
-                      const file = e.target.files?.[0] || null;
-                      if (file) {
-                        setNewArrivalBannerFiles(prev => ({ ...prev, [banner.id]: file }));
-                        setNewArrivalBannerPreviews(prev => ({ ...prev, [banner.id]: URL.createObjectURL(file) }));
-                      }
-                    }}
-                    className="w-full text-sm text-[#6B5B55] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-blush-light file:text-charcoal hover:file:bg-blush cursor-pointer"
-                  />
-                  {banner.imageUrl && !newArrivalBannerPreviews[banner.id] && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <img src={banner.imageUrl} alt="" className="w-16 h-8 object-cover rounded-lg border border-blush/30" />
-                      <p className="text-xs text-[#6B5B55]">Current image</p>
-                      <button type="button" onClick={() => updateNewArrivalBanner(index, 'imageUrl', '')} className="text-xs text-red-400 hover:text-red-600">Remove</button>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Gradient (used if no image)</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {gradients.map(g => (
-                      <button key={g} type="button" onClick={() => updateNewArrivalBanner(index, 'gradient', g)} className={`w-12 h-8 rounded-lg border-2 ${banner.gradient === g ? 'border-rose-gold' : 'border-transparent'}`} style={{ background: g }} />
-                    ))}
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={banner.active} onChange={e => updateNewArrivalBanner(index, 'active', e.target.checked)} className="w-4 h-4 rounded accent-rose-gold" />
-                  <span className="text-sm text-charcoal">Active (show on website)</span>
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-xs text-[#6B5B55] mt-4">
-          💡 Click <strong>Save Changes</strong> to upload images and apply all edits to the website.
-        </p>
-      </div>
-
-      {/* ── SALE PAGE BANNERS ───────────────────────────── */}
-      <div className="glass-card rounded-2xl p-6 mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-charcoal">
-            Sale Page Banners ({(content.saleBanners ?? []).length} banners)
-          </h3>
-          <Button size="sm" onClick={addSaleBanner}><Plus size={14} /> Add Banner</Button>
-        </div>
-
-        <div className="space-y-4">
-          {(content.saleBanners ?? []).map((banner, index) => (
-            <div key={banner.id} className="border border-blush/20 rounded-xl overflow-hidden">
-              <div
-                className="h-20 flex items-center px-6 relative"
-                style={
-                  saleBannerPreviews[banner.id]
-                    ? { backgroundImage: `url(${saleBannerPreviews[banner.id]})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                    : banner.imageUrl
-                      ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                      : { background: banner.gradient }
-                }
-              >
-                <div className="flex-1 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1">
-                  <p className="font-medium text-charcoal text-sm">{banner.title}</p>
-                  <p className="text-xs text-[#6B5B55]">{banner.subtitle.substring(0, 50)}</p>
-                </div>
-                <button onClick={() => removeSaleBanner(index)} className="p-1.5 rounded-lg hover:bg-white/50 ml-2">
-                  <Trash2 size={14} className="text-red-400" />
-                </button>
-              </div>
-
-              <div className="p-4 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Title" value={banner.title} onChange={e => updateSaleBanner(index, 'title', e.target.value)} />
-                  <Input label="Button Text" value={banner.buttonText} onChange={e => updateSaleBanner(index, 'buttonText', e.target.value)} />
-                  <Input label="Button Link" value={banner.buttonLink} onChange={e => updateSaleBanner(index, 'buttonLink', e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Subtitle</label>
-                  <input
-                    value={banner.subtitle}
-                    onChange={e => updateSaleBanner(index, 'subtitle', e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-blush/30 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-rose-gold/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-[#6B5B55] mb-1.5 flex items-center gap-1.5">
-                    <Image size={14} /> Banner Background Image (overrides gradient)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={e => {
-                      const file = e.target.files?.[0] || null;
-                      if (file) {
-                        setSaleBannerFiles(prev => ({ ...prev, [banner.id]: file }));
-                        setSaleBannerPreviews(prev => ({ ...prev, [banner.id]: URL.createObjectURL(file) }));
-                      }
-                    }}
-                    className="w-full text-sm text-[#6B5B55] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-blush-light file:text-charcoal hover:file:bg-blush cursor-pointer"
-                  />
-                  {banner.imageUrl && !saleBannerPreviews[banner.id] && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <img src={banner.imageUrl} alt="" className="w-16 h-8 object-cover rounded-lg border border-blush/30" />
-                      <p className="text-xs text-[#6B5B55]">Current image</p>
-                      <button type="button" onClick={() => updateSaleBanner(index, 'imageUrl', '')} className="text-xs text-red-400 hover:text-red-600">Remove</button>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#6B5B55] mb-1.5">Gradient (used if no image)</label>
-                  <div className="flex gap-2 flex-wrap">
-                    {gradients.map(g => (
-                      <button key={g} type="button" onClick={() => updateSaleBanner(index, 'gradient', g)} className={`w-12 h-8 rounded-lg border-2 ${banner.gradient === g ? 'border-rose-gold' : 'border-transparent'}`} style={{ background: g }} />
-                    ))}
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={banner.active} onChange={e => updateSaleBanner(index, 'active', e.target.checked)} className="w-4 h-4 rounded accent-rose-gold" />
-                  <span className="text-sm text-charcoal">Active (show on website)</span>
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <p className="text-xs text-[#6B5B55] mt-4">
-          💡 Click <strong>Save Changes</strong> to upload images and apply all edits to the website.
-        </p>
-      </div>
+      {/* ── Sale Page Banners ────────────────────────────────────────────────── */}
+      {renderBannerSection(
+        'Sale Page Banners',
+        (content.saleBanners ?? []) as any,
+        { update: updateSaleBanner, add: addSaleBanner, remove: removeSaleBanner },
+        saleBannerPreviews, setSaleBannerFiles, setSaleBannerPreviews,
+        saleBannerVideoPreviews, setSaleBannerVideoFiles, setSaleBannerVideoPreviews,
+      )}
     </div>
   );
 };
