@@ -5,9 +5,10 @@
    =================================================== */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Save, Eye, Plus, Trash2, Image, Megaphone, ToggleLeft, ToggleRight, Video, Type } from 'lucide-react';
+import { Save, Eye, Plus, Trash2, Image, Megaphone, ToggleLeft, ToggleRight, Video, Type, Crop } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { useContentStore, type ContentData } from '@/store/contentStore';
+import { ImageCropperModal } from '@/components/admin/ImageCropperModal';
 import {
   DEFAULT_HERO_LAYOUT,
   clampHeroPosition,
@@ -16,6 +17,7 @@ import {
   type HeroExtraComponent,
 } from '@/lib/heroLayout';
 import { NewArrivalsHero } from '@/pages/NewArrivals';
+import { SaleHero } from '@/pages/Sale';
 
 const gradients = [
   'linear-gradient(135deg, #F4C2C2, #E6E6FA, #F7E7CE)',
@@ -89,6 +91,7 @@ const uploadContentMedia = async (
 };
 
 // ── Reusable drag-and-drop media uploader (image or video) ──
+// Images go through the crop modal first; videos upload as-is.
 const MediaDropzone: React.FC<{
   accept: string;
   isVideo?: boolean;
@@ -96,15 +99,38 @@ const MediaDropzone: React.FC<{
   currentUrl?: string;
   onFile: (file: File) => void;
   onRemoveCurrent?: () => void;
-}> = ({ accept, isVideo, preview, currentUrl, onFile, onRemoveCurrent }) => {
+  cropAspect?: number; // width / height for the crop modal, default 16/6 (banner shape)
+}> = ({ accept, isVideo, preview, currentUrl, onFile, onRemoveCurrent, cropAspect = 16 / 6 }) => {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Crop modal state — holds the raw, not-yet-cropped image while admin adjusts it
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+
+  const handleIncomingFile = (file: File) => {
+    if (isVideo) {
+      onFile(file);
+      return;
+    }
+    // Image: open the cropper instead of uploading immediately
+    const reader = new FileReader();
+    reader.onload = () => setRawImageSrc(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) onFile(file);
+    if (file) handleIncomingFile(file);
+  };
+
+  const handleCropDone = (blob: Blob, previewUrl: string) => {
+    const croppedFile = new File([blob], 'cropped-banner.jpg', { type: 'image/jpeg' });
+    setRawImageSrc(null);
+    onFile(croppedFile);
+    // Replace the preview blob URL with the cropped one for accuracy
+    URL.revokeObjectURL(previewUrl); // not used directly; parent generates its own preview via onFile caller
   };
 
   return (
@@ -121,6 +147,11 @@ const MediaDropzone: React.FC<{
         <p className="text-xs text-[#6B5B55]">
           Drag &amp; drop {isVideo ? 'a video' : 'an image'} here, or click to browse
         </p>
+        {!isVideo && (
+          <p className="text-[10px] text-[#6B5B55]/70 flex items-center gap-1">
+            <Crop size={10} /> You'll be able to adjust the crop before upload
+          </p>
+        )}
         <input
           ref={inputRef}
           type="file"
@@ -128,7 +159,8 @@ const MediaDropzone: React.FC<{
           className="hidden"
           onChange={e => {
             const file = e.target.files?.[0];
-            if (file) onFile(file);
+            if (file) handleIncomingFile(file);
+            e.target.value = ''; // allow re-selecting the same file later
           }}
         />
       </div>
@@ -147,16 +179,36 @@ const MediaDropzone: React.FC<{
           ) : (
             <img src={preview || currentUrl} alt="" className="w-full h-24 object-cover rounded-lg border border-blush/30" />
           )}
-          {currentUrl && !preview && onRemoveCurrent && (
-            <button
-              type="button"
-              onClick={onRemoveCurrent}
-              className="absolute top-1 right-1 text-xs bg-white/90 text-red-500 rounded px-2 py-0.5"
-            >
-              Remove
-            </button>
-          )}
+          <div className="flex items-center justify-between mt-1">
+            {!isVideo && (preview || currentUrl) && (
+              <button
+                type="button"
+                onClick={() => setRawImageSrc(preview || currentUrl || null)}
+                className="text-xs text-rose-gold hover:underline flex items-center gap-1"
+              >
+                <Crop size={11} /> Re-adjust crop
+              </button>
+            )}
+            {currentUrl && !preview && onRemoveCurrent && (
+              <button
+                type="button"
+                onClick={onRemoveCurrent}
+                className="text-xs bg-white/90 text-red-500 rounded px-2 py-0.5 ml-auto"
+              >
+                Remove
+              </button>
+            )}
+          </div>
         </div>
+      )}
+
+      {rawImageSrc && (
+        <ImageCropperModal
+          imageSrc={rawImageSrc}
+          aspect={cropAspect}
+          onCancel={() => setRawImageSrc(null)}
+          onCropDone={handleCropDone}
+        />
       )}
     </div>
   );
@@ -539,25 +591,38 @@ export const AdminContent: React.FC = () => {
 
           return (
             <div key={banner.id} className="border border-blush/20 rounded-xl overflow-hidden">
-              {sectionTitle === 'New Arrival Page Banners' ? (
+              {sectionTitle === 'New Arrival Page Banners' || sectionTitle === 'Sale Page Banners' ? (
                 <div className="relative">
                   <div className="pointer-events-none scale-[0.6] origin-top-left w-[166%]">
-                    <NewArrivalsHero
-                      banner={{
-                        title: banner.title,
-                        subtitle: banner.subtitle,
-                        imageUrl: imagePreviews[banner.id] || banner.imageUrl,
-                        videoUrl: videoPreviews[banner.id] || banner.videoUrl,
-                        mediaType,
-                        gradient: banner.gradient,
-                      }}
-                    />
+                    {sectionTitle === 'New Arrival Page Banners' ? (
+                      <NewArrivalsHero
+                        banner={{
+                          title: banner.title,
+                          subtitle: banner.subtitle,
+                          imageUrl: imagePreviews[banner.id] || banner.imageUrl,
+                          videoUrl: videoPreviews[banner.id] || banner.videoUrl,
+                          mediaType,
+                          gradient: banner.gradient,
+                        }}
+                      />
+                    ) : (
+                      <SaleHero
+                        banner={{
+                          title: banner.title,
+                          subtitle: banner.subtitle,
+                          imageUrl: imagePreviews[banner.id] || banner.imageUrl,
+                          videoUrl: videoPreviews[banner.id] || banner.videoUrl,
+                          mediaType,
+                          gradient: banner.gradient,
+                        }}
+                      />
+                    )}
                   </div>
                   <button
                     onClick={() => handlers.remove(index)}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white shadow"
+                    className="absolute top-2 right-2 z-20 p-2 rounded-full bg-black/60 hover:bg-red-500 hover:scale-110 shadow-lg ring-1 ring-white/30 transition-all"
                   >
-                    <Trash2 size={14} className="text-red-400" />
+                    <Trash2 size={14} className="text-white" />
                   </button>
                 </div>
               ) : (
@@ -608,6 +673,7 @@ export const AdminContent: React.FC = () => {
                 {mediaType === 'image' && (
                   <MediaDropzone
                     accept="image/*"
+                    cropAspect={16 / 6}
                     currentUrl={banner.imageUrl}
                     preview={imagePreviews[banner.id]}
                     onFile={file => {
@@ -838,31 +904,17 @@ export const AdminContent: React.FC = () => {
             <label className="text-sm font-medium text-[#6B5B55] mb-1.5 flex items-center gap-1.5">
               <Image size={14} /> Hero Background Image
             </label>
-            <input
-              type="file"
+            <MediaDropzone
               accept="image/*"
-              onChange={e => {
-                const file = e.target.files?.[0] || null;
+              cropAspect={16 / 7}
+              currentUrl={content.heroImageUrl}
+              preview={heroPreview}
+              onFile={file => {
                 setHeroFile(file);
-                if (file) setHeroPreview(URL.createObjectURL(file));
+                setHeroPreview(URL.createObjectURL(file));
               }}
-              className="w-full text-sm text-[#6B5B55] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-blush-light file:text-charcoal hover:file:bg-blush cursor-pointer"
+              onRemoveCurrent={() => updateField('heroImageUrl', '')}
             />
-            {(heroPreview || content.heroImageUrl) && (
-              <div className="mt-2 relative">
-                <img
-                  src={heroPreview || content.heroImageUrl}
-                  alt="Hero preview"
-                  className="w-full h-32 object-cover rounded-xl border border-blush/30"
-                />
-                {content.heroImageUrl && !heroPreview && (
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-[#6B5B55]">Current hero image — upload a new one to replace</p>
-                    <button type="button" onClick={() => updateField('heroImageUrl', '')} className="text-xs text-red-400 hover:text-red-600">Remove image</button>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
