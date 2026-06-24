@@ -28,63 +28,87 @@ const shuffleArray = <T,>(arr: T[]): T[] => {
 /* ─────────────────────────────────────────────
    SALE HERO BANNER
 ───────────────────────────────────────────── */
-const SaleHero: React.FC<{
-    banner?: { title?: string; subtitle?: string; imageUrl?: string; gradient?: string };
-}> = ({ banner }) => (
-    <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="relative mb-10 rounded-3xl overflow-hidden"
-        style={
-            banner?.imageUrl
-                ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-                : { background: banner?.gradient || 'linear-gradient(135deg, #2C1F1A 0%, #3D2820 50%, #4A3028 100%)' }
-        }
-    >
-        {/* Decorative circle */}
-        <div
-            className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-25"
-            style={{ background: 'radial-gradient(circle, #B07D6B 0%, transparent 65%)' }}
-        />
+export const SaleHero: React.FC<{
+    banner?: {
+        title?: string;
+        subtitle?: string;
+        imageUrl?: string;
+        videoUrl?: string;
+        mediaType?: 'gradient' | 'image' | 'video';
+        gradient?: string;
+    };
+}> = ({ banner }) => {
+    const mediaType = banner?.mediaType ?? (banner?.videoUrl ? 'video' : banner?.imageUrl ? 'image' : 'gradient');
 
-        <div className="absolute inset-0 bg-black/30" />
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="relative mb-10 rounded-3xl overflow-hidden"
+            style={
+                mediaType === 'image' && banner?.imageUrl
+                    ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                    : mediaType !== 'video'
+                        ? { background: banner?.gradient || 'linear-gradient(135deg, #2C1F1A 0%, #3D2820 50%, #4A3028 100%)' }
+                        : undefined
+            }
+        >
+            {mediaType === 'video' && banner?.videoUrl && (
+                <video
+                    src={banner.videoUrl}
+                    className="absolute inset-0 w-full h-full object-cover z-0"
+                    muted
+                    loop
+                    autoPlay
+                    playsInline
+                />
+            )}
 
-        <div className="relative z-10 px-8 md:px-16 py-8 md:py-10 flex flex-col md:flex-row items-center gap-8">
-            {/* Left: text */}
-            <div className="flex-1 text-center md:text-left">
-                <div className="inline-flex items-center gap-2 mb-4">
-                    <div className="h-px w-8" style={{ background: '#B07D6B' }} />
-                    <span className="text-[10px] font-semibold tracking-[0.35em] uppercase" style={{ color: '#B07D6B' }}>
-                        Limited Time
-                    </span>
-                    <div className="h-px w-8" style={{ background: '#B07D6B' }} />
+            {/* Decorative circle */}
+            <div
+                className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-25"
+                style={{ background: 'radial-gradient(circle, #B07D6B 0%, transparent 65%)' }}
+            />
+
+            <div className="absolute inset-0 bg-black/30" />
+
+            <div className="relative z-10 px-8 md:px-16 py-8 md:py-10 flex flex-col md:flex-row items-center gap-8">
+                {/* Left: text */}
+                <div className="flex-1 text-center md:text-left">
+                    <div className="inline-flex items-center gap-2 mb-4">
+                        <div className="h-px w-8" style={{ background: '#B07D6B' }} />
+                        <span className="text-[10px] font-semibold tracking-[0.35em] uppercase" style={{ color: '#B07D6B' }}>
+                            Limited Time
+                        </span>
+                        <div className="h-px w-8" style={{ background: '#B07D6B' }} />
+                    </div>
+
+                    <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-light mb-4 leading-tight text-white">
+                        {banner?.title || 'Sale Collection'}
+                    </h1>
+
+                    <p className="text-sm md:text-base mb-0 max-w-xs md:max-w-sm text-white/80" style={{ lineHeight: '1.7' }}>
+                        {banner?.subtitle || 'Luxury pieces, exceptional value. Limited time offers.'}
+                    </p>
                 </div>
 
-                <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-light mb-4 leading-tight text-white">
-                    {banner?.title || 'Sale Collection'}
-                </h1>
-
-                <p className="text-sm md:text-base mb-0 max-w-xs md:max-w-sm text-white/80" style={{ lineHeight: '1.7' }}>
-                    {banner?.subtitle || 'Luxury pieces, exceptional value. Limited time offers.'}
-                </p>
+                {/* Right: decorative icon */}
+                <div className="flex-shrink-0 hidden md:flex flex-col items-center gap-3">
+                    <motion.div
+                        animate={{ rotate: [0, 3, -3, 0] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                        className="w-24 h-24 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(176, 125, 107, 0.15)', border: '1px solid rgba(176, 125, 107, 0.3)' }}
+                    >
+                        <Sparkles size={36} style={{ color: '#B07D6B' }} />
+                    </motion.div>
+                    <span className="text-[9px] tracking-[0.3em] uppercase" style={{ color: '#B07D6B' }}>Sale Season</span>
+                </div>
             </div>
-
-            {/* Right: decorative icon */}
-            <div className="flex-shrink-0 hidden md:flex flex-col items-center gap-3">
-                <motion.div
-                    animate={{ rotate: [0, 3, -3, 0] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                    className="w-24 h-24 rounded-full flex items-center justify-center"
-                    style={{ background: 'rgba(176, 125, 107, 0.15)', border: '1px solid rgba(176, 125, 107, 0.3)' }}
-                >
-                    <Sparkles size={36} style={{ color: '#B07D6B' }} />
-                </motion.div>
-                <span className="text-[9px] tracking-[0.3em] uppercase" style={{ color: '#B07D6B' }}>Sale Season</span>
-            </div>
-        </div>
-    </motion.div>
-);
+        </motion.div>
+    );
+};
 
 /* ─────────────────────────────────────────────
    SALE PAGE
@@ -215,7 +239,9 @@ export const SalePage: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* ── Sale Hero Banner ── */}
-                <SaleHero banner={content.saleBanners?.[0]} />
+                {content.saleBanners?.[0]?.active !== false && (
+                    <SaleHero banner={content.saleBanners?.[0]} />
+                )}
 
                 {/* ── Piece count under hero banner ── */}
                 <FadeIn>

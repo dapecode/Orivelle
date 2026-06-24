@@ -15,6 +15,7 @@ import {
   type HeroPosition,
   type HeroExtraComponent,
 } from '@/lib/heroLayout';
+import { NewArrivalsHero } from '@/pages/NewArrivals';
 
 const gradients = [
   'linear-gradient(135deg, #F4C2C2, #E6E6FA, #F7E7CE)',
@@ -538,25 +539,48 @@ export const AdminContent: React.FC = () => {
 
           return (
             <div key={banner.id} className="border border-blush/20 rounded-xl overflow-hidden">
-              <div className="h-20 flex items-center px-6 relative overflow-hidden" style={livePreviewStyle}>
-                {mediaType === 'video' && (videoPreviews[banner.id] || banner.videoUrl) && (
-                  <video
-                    src={videoPreviews[banner.id] || banner.videoUrl}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    muted
-                    loop
-                    autoPlay
-                    playsInline
-                  />
-                )}
-                <div className="relative flex-1 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1">
-                  <p className="font-medium text-charcoal text-sm">{banner.title}</p>
-                  <p className="text-xs text-[#6B5B55]">{banner.subtitle.substring(0, 50)}</p>
+              {sectionTitle === 'New Arrival Page Banners' ? (
+                <div className="relative">
+                  <div className="pointer-events-none scale-[0.6] origin-top-left w-[166%]">
+                    <NewArrivalsHero
+                      banner={{
+                        title: banner.title,
+                        subtitle: banner.subtitle,
+                        imageUrl: imagePreviews[banner.id] || banner.imageUrl,
+                        videoUrl: videoPreviews[banner.id] || banner.videoUrl,
+                        mediaType,
+                        gradient: banner.gradient,
+                      }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => handlers.remove(index)}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 hover:bg-white shadow"
+                  >
+                    <Trash2 size={14} className="text-red-400" />
+                  </button>
                 </div>
-                <button onClick={() => handlers.remove(index)} className="relative p-1.5 rounded-lg hover:bg-white/50 ml-2">
-                  <Trash2 size={14} className="text-red-400" />
-                </button>
-              </div>
+              ) : (
+                <div className="h-20 flex items-center px-6 relative overflow-hidden" style={livePreviewStyle}>
+                  {mediaType === 'video' && (videoPreviews[banner.id] || banner.videoUrl) && (
+                    <video
+                      src={videoPreviews[banner.id] || banner.videoUrl}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      muted
+                      loop
+                      autoPlay
+                      playsInline
+                    />
+                  )}
+                  <div className="relative flex-1 bg-white/40 backdrop-blur-sm rounded-lg px-3 py-1">
+                    <p className="font-medium text-charcoal text-sm">{banner.title}</p>
+                    <p className="text-xs text-[#6B5B55]">{banner.subtitle.substring(0, 50)}</p>
+                  </div>
+                  <button onClick={() => handlers.remove(index)} className="relative p-1.5 rounded-lg hover:bg-white/50 ml-2">
+                    <Trash2 size={14} className="text-red-400" />
+                  </button>
+                </div>
+              )}
 
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
