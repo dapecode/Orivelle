@@ -955,8 +955,8 @@ const CheckoutForm: React.FC = () => {
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* ── SSLCommerz ── */}
+              {/* 
+              {/* ── SSLCommerz ── 
               <div className="rounded-2xl overflow-hidden"
                 style={{ border: paymentMethod === 'sslcommerz' ? '2px solid #B07D6B' : '1.5px solid rgba(176,125,107,0.35)' }}>
                 <button onClick={() => selectPaymentMethod('sslcommerz')}
@@ -991,8 +991,8 @@ const CheckoutForm: React.FC = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
-            </div>
+              </div>*/}
+            </div>*
           </div>
 
           <div className="h-px" style={{ background: 'rgba(176,125,107,0.15)' }} />
