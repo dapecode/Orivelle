@@ -251,9 +251,9 @@ const drawAGLogo = (
   x: number,
   y: number,
   size: number,
-  logoText: string = 'AG',
-  colorLeft: string = '#C0C0C0',
-  colorRight: string = '#F5A623'
+  logoText: string = 'TEXT',
+  colorLeft: string = '#030303ff',
+  colorRight: string = '#630303ff'
 ) => {
   ctx.save();
   ctx.textBaseline = 'alphabetic';
@@ -946,9 +946,9 @@ export const AdminProducts: React.FC = () => {
   const [textWmColor, setTextWmColor] = useState<string>('#ffffff');
   const [textWmSpacingX, setTextWmSpacingX] = useState<number>(180);
   const [textWmSpacingY, setTextWmSpacingY] = useState<number>(90);
-  const [agLogoText, setAgLogoText] = useState<string>('AG');
-  const [agLogoColorLeft, setAgLogoColorLeft] = useState<string>('#C0C0C0');
-  const [agLogoColorRight, setAgLogoColorRight] = useState<string>('#F5A623');
+  const [agLogoText, setAgLogoText] = useState<string>('TEXT');
+  const [agLogoColorLeft, setAgLogoColorLeft] = useState<string>('#000000ff');
+  const [agLogoColorRight, setAgLogoColorRight] = useState<string>('#5c0404ff');
   const [hasEyeDropper] = useState(() => typeof (window as any).EyeDropper !== 'undefined');
   const [detectedColors, setDetectedColors] = useState<string[]>([]);
   const [detectingColors, setDetectingColors] = useState(false);
@@ -997,15 +997,24 @@ export const AdminProducts: React.FC = () => {
   // ── Auto-generate SKU ──
   const generateSKU = (name: string): string => {
     if (!name.trim()) return '';
+
     const words = name.trim().toUpperCase().split(/\s+/);
-    const prefix = words.map((w: string) => w.slice(0, 3)).join('-');
-    const suffix = Date.now().toString().slice(-4);
-    return `AG-${prefix}-${suffix}`;
+
+    // First 2 letters of first 2 words only
+    const prefix = words
+      .slice(0, 2)
+      .map(w => w.slice(0, 2))
+      .join('');
+
+    // Random 3 digits
+    const suffix = Math.floor(100 + Math.random() * 900);
+
+    return `${prefix}${suffix}`;
   };
 
   const handleNameChange = (name: string) => {
     const newForm: Partial<Product> = { ...form, name };
-    if (!form.sku || form.sku.startsWith('AG-')) newForm.sku = generateSKU(name);
+    if (!form.sku || form.sku.startsWith('')) newForm.sku = generateSKU(name);
     setForm(newForm);
   };
 
