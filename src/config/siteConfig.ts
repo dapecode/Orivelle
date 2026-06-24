@@ -10,14 +10,14 @@ import { BRAND } from './brandingConfig';
 
 export const SITE = {
     /** Payment methods shown in footer */
-    paymentMethods: ['bKash', 'Nagad', 'COD'] as string[],
+    paymentMethods: ['Card', 'COD'] as string[],
 
     /** Social links */
-    instagram: 'https://www.instagram.com/auntheticgirlswear',
-    facebook: 'https://www.facebook.com/demo Sites',
+    instagram: 'https://www.instagram.com',
+    facebook: 'https://www.facebook.com',
 
     /** Canonical domain (no trailing slash) */
-    domain: 'https://girleyglow-seven.vercel.app',
+    domain: 'https://demo-eta-black.vercel.app/',
 
     /** SEO / meta — derived from brandingConfig so renaming propagates here too */
     defaultTitle: BRAND.defaultTitle,
