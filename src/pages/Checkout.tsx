@@ -1,20 +1,19 @@
 /* ===================================================
    - Checkout Page
    - Single page form (no steps)
-   - Bangla labels
-   - Payment method selection inline
+   - English labels
+   - Payment method selection inline (COD / Card / SSLCommerz)
    - Review popup modal
    - Google Sheets integration
-   - bKash/Nagad: 01623-124760 (tap to copy)
    =================================================== */
 declare global { interface Window { dataLayer: any[]; } }
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, CheckCircle, ArrowLeft,
-  Tag, AlertCircle, Package, Copy, Check, X,
-  CreditCard, Truck,
+  Tag, AlertCircle, Package, X,
+  CreditCard, Truck, Zap,
 } from 'lucide-react';
 import { useCartStore, useOrderStore, useAdminDataStore } from '@/store';
 import { sendOrderToGoogleSheets } from '@/lib/supabase';
@@ -95,38 +94,40 @@ interface BuyNowState {
   quantity: number;
 }
 
-const PAYMENT_NUMBER = '01623-124760';
-
+/* ─── Delivery options (renamed) ─── */
 const DELIVERY_ZONES = [
-  { id: 'inside_dhaka', label: 'ঢাকার ভেতরে', charge: 80, icon: '🏙️' },
-  { id: 'outside_dhaka', label: 'ঢাকার বাইরে', charge: 150, icon: '🗺️' },
+  { id: 'standard', label: 'Standard Delivery', sub: '3–5 business days', charge: 80, icon: Truck },
+  { id: 'express', label: 'Express Delivery', sub: '1–2 business days', charge: 150, icon: Zap },
 ] as const;
 
 type DeliveryZone = typeof DELIVERY_ZONES[number]['id'];
 
-/* ─── Copy button for payment number ─── */
-const CopyNumber: React.FC = () => {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(PAYMENT_NUMBER);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <button
-      onClick={handleCopy}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-all"
-      style={{
-        background: copied ? 'rgba(74,140,92,0.15)' : 'rgba(176,125,107,0.12)',
-        color: copied ? '#4A8C5C' : '#B07D6B',
-        border: `1px solid ${copied ? 'rgba(74,140,92,0.3)' : 'rgba(176,125,107,0.25)'}`,
-      }}
-    >
-      {copied ? <Check size={13} /> : <Copy size={13} />}
-      {copied ? 'কপি হয়েছে!' : PAYMENT_NUMBER}
-    </button>
-  );
-};
+/* ─── Country list with ISO2 + dial code (curated, extend as needed) ─── */
+const COUNTRIES = [
+  { iso2: 'BD', name: 'Bangladesh', dial: '+880' },
+  { iso2: 'US', name: 'United States', dial: '+1' },
+  { iso2: 'GB', name: 'United Kingdom', dial: '+44' },
+  { iso2: 'CA', name: 'Canada', dial: '+1' },
+  { iso2: 'AU', name: 'Australia', dial: '+61' },
+  { iso2: 'IN', name: 'India', dial: '+91' },
+  { iso2: 'PK', name: 'Pakistan', dial: '+92' },
+  { iso2: 'AE', name: 'United Arab Emirates', dial: '+971' },
+  { iso2: 'SA', name: 'Saudi Arabia', dial: '+966' },
+  { iso2: 'MY', name: 'Malaysia', dial: '+60' },
+  { iso2: 'SG', name: 'Singapore', dial: '+65' },
+  { iso2: 'DE', name: 'Germany', dial: '+49' },
+  { iso2: 'FR', name: 'France', dial: '+33' },
+  { iso2: 'IT', name: 'Italy', dial: '+39' },
+  { iso2: 'NL', name: 'Netherlands', dial: '+31' },
+  { iso2: 'JP', name: 'Japan', dial: '+81' },
+  { iso2: 'CN', name: 'China', dial: '+86' },
+  { iso2: 'KR', name: 'South Korea', dial: '+82' },
+  { iso2: 'QA', name: 'Qatar', dial: '+974' },
+  { iso2: 'KW', name: 'Kuwait', dial: '+965' },
+  { iso2: 'OM', name: 'Oman', dial: '+968' },
+  { iso2: 'NP', name: 'Nepal', dial: '+977' },
+  { iso2: 'LK', name: 'Sri Lanka', dial: '+94' },
+] as const;
 
 /* ─── Field wrapper ─── */
 const Field: React.FC<{
@@ -134,10 +135,12 @@ const Field: React.FC<{
   children: React.ReactNode;
   error?: string;
   required?: boolean;
-}> = ({ label, children, error, required }) => (
+  hint?: string;
+}> = ({ label, children, error, required, hint }) => (
   <div>
     <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: '#8C7269' }}>
       {label}{required && <span style={{ color: '#B07D6B' }}> *</span>}
+      {hint && <span className="ml-1 font-normal normal-case text-[11px]" style={{ color: '#A89890' }}>({hint})</span>}
     </label>
     {children}
     {error && (
@@ -170,6 +173,22 @@ const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { hasError?:
       e.target.style.boxShadow = 'none';
     }}
   />
+);
+
+/* ─── Styled Select ─── */
+const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { hasError?: boolean }> = ({
+  hasError, children, ...props
+}) => (
+  <select
+    {...props}
+    className="w-full px-4 py-2 rounded-xl text-sm outline-none transition-all bg-white"
+    style={{
+      border: `1.5px solid ${hasError ? 'rgba(192,80,77,0.4)' : 'rgba(176,125,107,0.2)'}`,
+      color: '#2C2C2C',
+    }}
+  >
+    {children}
+  </select>
 );
 
 /* ─── Styled Textarea ─── */
@@ -224,33 +243,73 @@ const CheckoutForm: React.FC = () => {
 
   const discount = buyNow ? 0 : getDiscount();
 
-  // Form
-  const [form, setForm] = useState({ fullName: '', phone: '', address: '', notes: '' });
-  const [errors, setErrors] = useState<Partial<typeof form & { deliveryZone: string; transactionId: string }>>({});
-  const updateForm = (field: string, value: string) => {
+  // Form — fullName, phone (with separate dial code), country, city, state (optional), postCode, addressLine
+  const [form, setForm] = useState({
+    fullName: '',
+    dialCode: '+880',
+    phone: '',
+    country: 'BD',
+    city: '',
+    state: '',
+    postCode: '',
+    addressLine: '',
+    notes: '',
+  });
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form | 'deliveryZone', string>>>({});
+  const updateForm = (field: keyof typeof form, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  // Refs for scroll-to-error
+  const fullNameRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
+  const countryRef = useRef<HTMLDivElement>(null);
+  const cityRef = useRef<HTMLDivElement>(null);
+  const postCodeRef = useRef<HTMLDivElement>(null);
+  const addressLineRef = useRef<HTMLDivElement>(null);
+  const deliveryZoneRef = useRef<HTMLDivElement>(null);
+  const cardholderRef = useRef<HTMLDivElement>(null);
+
+  // Auto-detect country / dial code from user's location (best-effort; user can change it)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await fetch('https://ipapi.co/json/');
+        const data = await resp.json();
+        const detected = COUNTRIES.find(c => c.iso2 === data?.country_code);
+        if (!cancelled && detected) {
+          setForm(prev => ({ ...prev, country: detected.iso2, dialCode: detected.dial }));
+        }
+      } catch {
+        // silent fallback — keep default (Bangladesh)
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // When country changes manually, keep dial code in sync unless user already edited it independently.
+  const handleCountryChange = (iso2: string) => {
+    const c = COUNTRIES.find(c => c.iso2 === iso2);
+    setForm(prev => ({ ...prev, country: iso2, dialCode: c ? c.dial : prev.dialCode }));
+    setErrors(prev => ({ ...prev, country: '' }));
   };
 
   // Delivery
   const [deliveryZone, setDeliveryZone] = useState<DeliveryZone | ''>('');
   const shippingCharge = deliveryZone ? DELIVERY_ZONES.find(z => z.id === deliveryZone)!.charge : 0;
 
-  // Payment
+  // Payment — bKash & Nagad removed
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod');
-  // clear gateway error whenever method changes
   const selectPaymentMethod = (m: PaymentMethod) => { setPaymentMethod(m); setGatewayError(''); };
-  const [transactionId, setTransactionId] = useState('');
 
-  // Card form state (collected before Stripe redirect)
+  // Card form state (collected before Stripe confirms)
   const [cardForm, setCardForm] = useState({
     cardholderName: '',
     billingAddress: '',
-    cardNumber: '',
-    expiry: '',
-    cvc: '',
   });
-  const [cardFormErrors, setCardFormErrors] = useState<{ cardholderName?: string; billingAddress?: string }>({});
+  const [cardFormErrors, setCardFormErrors] = useState<{ cardholderName?: string }>({});
   const [stripeReady, setStripeReady] = useState(false);
   const [gatewayError, setGatewayError] = useState('');
 
@@ -262,14 +321,13 @@ const CheckoutForm: React.FC = () => {
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponError, setCouponError] = useState('');
-  const [appliedCouponCode, setAppliedCouponCode] = useState('');
 
   const applyCoupon = () => {
     setCouponError('');
     const code = couponInput.trim();
 
     if (!code) {
-      setCouponError('কুপন কোড দিন।');
+      setCouponError('Please enter a coupon code.');
       return;
     }
 
@@ -278,28 +336,27 @@ const CheckoutForm: React.FC = () => {
     );
 
     if (!coupon) {
-      setCouponError('ভুল কুপন কোড।');
+      setCouponError('Invalid coupon code.');
       return;
     }
     if (new Date(coupon.expiresAt) < new Date()) {
-      setCouponError('এই কুপনের মেয়াদ শেষ।');
+      setCouponError('This coupon has expired.');
       return;
     }
     if (coupon.usedCount >= coupon.maxUses) {
-      setCouponError('কুপনের ব্যবহার সীমা শেষ।');
+      setCouponError('This coupon has reached its usage limit.');
       return;
     }
     if (subtotal < coupon.minOrderAmount) {
-      setCouponError(`সর্বনিম্ন অর্ডার পরিমাণ ৳${coupon.minOrderAmount}`);
+      setCouponError(`Minimum order amount is ৳${coupon.minOrderAmount}`);
       return;
     }
 
-    const discount = coupon.type === 'percentage'
+    const discountAmt = coupon.type === 'percentage'
       ? Math.round((subtotal * coupon.discount) / 100)
       : Math.min(coupon.discount, subtotal);
 
-    setCouponDiscount(discount);
-    setAppliedCouponCode(coupon.code);
+    setCouponDiscount(discountAmt);
     setCouponApplied(true);
   };
 
@@ -313,31 +370,56 @@ const CheckoutForm: React.FC = () => {
   const [orderNumber, setOrderNumber] = useState('');
   const [placing, setPlacing] = useState(false);
 
-  // Validation
+  const scrollToRef = (ref: React.RefObject<HTMLDivElement | null>) => {
+    ref.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  };
+
+  // Validation — returns true if valid; otherwise sets errors and scrolls to the first invalid field
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
-    if (!form.fullName.trim()) newErrors.fullName = 'নাম দিন।';
-    if (!form.phone.trim()) newErrors.phone = 'মোবাইল নম্বর দিন।';
-    if (!form.address.trim()) newErrors.address = 'ঠিকানা দিন।';
-    if (!deliveryZone) newErrors.deliveryZone = 'ডেলিভারি এলাকা বেছে নিন।';
-    if ((paymentMethod === 'bkash' || paymentMethod === 'nagad') && !transactionId.trim()) {
-      newErrors.transactionId = 'ট্রানজেকশন আইডি দিন।';
-    }
+
+    if (!form.fullName.trim()) newErrors.fullName = 'Please enter your full name.';
+    if (!form.phone.trim()) newErrors.phone = 'Please enter your mobile number.';
+    if (!form.country.trim()) newErrors.country = 'Please select your country.';
+    if (!form.city.trim()) newErrors.city = 'Please enter your city.';
+    if (!form.postCode.trim()) newErrors.postCode = 'Please enter your post/zip code.';
+    if (!form.addressLine.trim()) newErrors.addressLine = 'Please enter your address.';
+    if (!deliveryZone) newErrors.deliveryZone = 'Please select a delivery option.';
+
+    let cardErr: typeof cardFormErrors = {};
     if (paymentMethod === 'stripe') {
-      const cErr: typeof cardFormErrors = {};
-      if (!cardForm.cardholderName.trim()) cErr.cardholderName = 'Cardholder name is required.';
-      if (Object.keys(cErr).length) {
-        setCardFormErrors(cErr);
-        setErrors(newErrors);
-        return false;
-      }
-      if (!stripeReady) {
-        setErrors(newErrors);
-        return false;
-      }
+      if (!cardForm.cardholderName.trim()) cardErr.cardholderName = 'Cardholder name is required.';
     }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setCardFormErrors(cardErr);
+
+    // Order of fields top-to-bottom — scroll to the first one that failed.
+    const order: Array<[boolean, React.RefObject<HTMLDivElement | null>]> = [
+      [!!newErrors.fullName, fullNameRef],
+      [!!newErrors.phone, phoneRef],
+      [!!newErrors.country, countryRef],
+      [!!newErrors.city, cityRef],
+      [!!newErrors.postCode, postCodeRef],
+      [!!newErrors.addressLine, addressLineRef],
+      [!!newErrors.deliveryZone, deliveryZoneRef],
+      [!!cardErr.cardholderName, cardholderRef],
+    ];
+    const firstInvalid = order.find(([invalid]) => invalid);
+    if (firstInvalid) {
+      scrollToRef(firstInvalid[1]);
+      return false;
+    }
+
+    if (paymentMethod === 'stripe' && !stripeReady) {
+      scrollToRef(cardholderRef);
+      return false;
+    }
+
+    return true;
   };
 
   const handleReviewOrder = () => {
@@ -374,6 +456,7 @@ const CheckoutForm: React.FC = () => {
     const lastName = rest.join(' ');
 
     const isGatewayPayment = paymentMethod === 'stripe' || paymentMethod === 'sslcommerz';
+    const countryName = COUNTRIES.find(c => c.iso2 === form.country)?.name || form.country;
 
     const orderData = {
       id: Date.now().toString(),
@@ -381,7 +464,6 @@ const CheckoutForm: React.FC = () => {
       status: 'pending' as const,
       paymentStatus: 'pending' as const,
       paymentMethod,
-      transactionId: transactionId || undefined,
       couponCode: couponApplied ? couponInput.trim().toUpperCase() : undefined,
       subtotal,
       shippingCharge,
@@ -394,10 +476,13 @@ const CheckoutForm: React.FC = () => {
         firstName,
         lastName,
         email: '',
-        phone: form.phone,
-        address: form.address,
-        city: DELIVERY_ZONES.find(z => z.id === deliveryZone)?.label || '',
-        district: '',
+        phone: `${form.dialCode} ${form.phone}`,
+        address: form.addressLine,
+        city: form.city,
+        state: form.state || '',
+        postCode: form.postCode,
+        country: countryName,
+        district: DELIVERY_ZONES.find(z => z.id === deliveryZone)?.label || '',
       },
       items: checkoutItems.map(item => ({
         productId: item.product.id,
@@ -473,10 +558,10 @@ const CheckoutForm: React.FC = () => {
               amount: total,
               customer: {
                 name: form.fullName,
-                phone: form.phone,
+                phone: `${form.dialCode} ${form.phone}`,
                 email: sslEmail || undefined,
-                address: form.address,
-                city: DELIVERY_ZONES.find(z => z.id === deliveryZone)?.label || '',
+                address: form.addressLine,
+                city: form.city,
               },
             }),
           });
@@ -554,25 +639,25 @@ const CheckoutForm: React.FC = () => {
             <CheckCircle size={44} className="text-green-500" />
           </motion.div>
           <h1 className="heading-serif text-3xl font-bold text-charcoal mb-2">
-            {paymentMethod === 'stripe' || paymentMethod === 'sslcommerz' ? 'অর্ডার সংরক্ষিত হয়েছে' : 'অর্ডার সম্পন্ন! 🎉'}
+            {paymentMethod === 'stripe' || paymentMethod === 'sslcommerz' ? 'Order Saved' : 'Order Placed! 🎉'}
           </h1>
-          <p className="text-warm-gray mb-2">আপনার অর্ডারের জন্য ধন্যবাদ</p>
+          <p className="text-warm-gray mb-2">Thank you for your order</p>
           <p className="text-sm text-warm-gray mb-6">
-            অর্ডার নম্বর: <strong className="text-charcoal">{orderNumber}</strong>
+            Order Number: <strong className="text-charcoal">{orderNumber}</strong>
           </p>
           <div className="rounded-2xl p-5 mb-6 text-sm text-warm-gray text-left"
             style={{ background: 'rgba(176,125,107,0.08)', border: '1px solid rgba(176,125,107,0.2)' }}>
             {paymentMethod === 'cod'
-              ? '✅ ডেলিভারির সময় টাকা পরিশোধ করুন।'
+              ? '✅ Please pay in cash upon delivery.'
               : paymentMethod === 'stripe' || paymentMethod === 'sslcommerz'
-                ? '⚠️ পেমেন্ট পেজে যাওয়া সম্ভব হয়নি। অনুগ্রহ করে আমাদের সাথে যোগাযোগ করুন অথবা আবার চেষ্টা করুন।'
-                : `✅ আপনার পেমেন্ট যাচাই করা হবে ২৪ ঘণ্টার মধ্যে।`}
+                ? '⚠️ We could not reach the payment page. Please contact us or try again.'
+                : '✅ Your payment will be verified within 24 hours.'}
           </div>
           <button
             onClick={() => navigate('/shop')}
             className="px-8 py-3 rounded-2xl font-semibold text-sm text-white"
             style={{ background: 'linear-gradient(135deg, #B07D6B, #C4956A)' }}>
-            শপিং চালিয়ে যান
+            Continue Shopping
           </button>
         </motion.div>
       </div>
@@ -592,8 +677,8 @@ const CheckoutForm: React.FC = () => {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="heading-serif text-2xl font-bold text-charcoal">চেকআউট</h1>
-            <p className="text-xs text-[#6B5B55]">আপনার অর্ডার সম্পন্ন করুন</p>
+            <h1 className="heading-serif text-2xl font-bold text-charcoal">Checkout</h1>
+            <p className="text-xs text-[#6B5B55]">Complete your order</p>
           </div>
         </div>
 
@@ -605,7 +690,7 @@ const CheckoutForm: React.FC = () => {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#B07D6B' }}>
               <Package size={12} className="inline mr-1" />
-              আপনার অর্ডার ({checkoutItems.length} পণ্য)
+              Your Order ({checkoutItems.length} item{checkoutItems.length > 1 ? 's' : ''})
             </p>
             <div className="space-y-2">
               {checkoutItems.map(item => (
@@ -635,55 +720,129 @@ const CheckoutForm: React.FC = () => {
 
           {/* ── Shipping Info ── */}
           <div className="space-y-2">
-            <p className="text-[15px] font-bold text-[#2B2B2B]">📦 ডেলিভারি তথ্য</p>
+            <p className="text-[15px] font-bold text-[#2B2B2B]">📦 Delivery Information</p>
 
-            <Field label="পুরো নাম" required error={errors.fullName}>
-              <Input
-                value={form.fullName}
-                onChange={e => updateForm('fullName', e.target.value)}
-                placeholder="আপনার  নাম"
-                hasError={!!errors.fullName}
-              />
-            </Field>
+            <div ref={fullNameRef}>
+              <Field label="Full Name" required error={errors.fullName}>
+                <Input
+                  value={form.fullName}
+                  onChange={e => updateForm('fullName', e.target.value)}
+                  placeholder="Your full name"
+                  hasError={!!errors.fullName}
+                />
+              </Field>
+            </div>
 
-            <Field label="মোবাইল নম্বর" required error={errors.phone}>
-              <Input
-                type="tel"
-                value={form.phone}
-                onChange={e => updateForm('phone', e.target.value)}
-                placeholder="মোবাইল নম্বর"
-                hasError={!!errors.phone}
-              />
-            </Field>
+            <div ref={phoneRef}>
+              <Field label="Mobile Number" required error={errors.phone}>
+                <div className="flex gap-2">
+                  <select
+                    value={form.dialCode}
+                    onChange={e => updateForm('dialCode', e.target.value)}
+                    className="px-3 py-2 rounded-xl text-sm outline-none bg-white flex-shrink-0"
+                    style={{ border: '1.5px solid rgba(176,125,107,0.2)', color: '#2C2C2C', width: '110px' }}
+                  >
+                    {COUNTRIES.map(c => (
+                      <option key={c.iso2} value={c.dial}>{c.iso2} {c.dial}</option>
+                    ))}
+                  </select>
+                  <Input
+                    type="tel"
+                    value={form.phone}
+                    onChange={e => updateForm('phone', e.target.value)}
+                    placeholder="Mobile number"
+                    hasError={!!errors.phone}
+                  />
+                </div>
+                <p className="text-[11px] mt-1" style={{ color: '#A89890' }}>
+                  Country code is auto-detected from your location — change it if needed.
+                </p>
+              </Field>
+            </div>
 
-            <Field label="সম্পূর্ণ ঠিকানা" required error={errors.address}>
-              <Textarea
-                value={form.address}
-                onChange={e => updateForm('address', e.target.value)}
-                placeholder="সম্পূর্ণ ঠিকানা, গ্রাম, থানা, বিভাগ"
-              />
-            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <div ref={countryRef}>
+                <Field label="Country" required error={errors.country}>
+                  <Select
+                    value={form.country}
+                    onChange={e => handleCountryChange(e.target.value)}
+                    hasError={!!errors.country}
+                  >
+                    {COUNTRIES.map(c => (
+                      <option key={c.iso2} value={c.iso2}>{c.name}</option>
+                    ))}
+                  </Select>
+                  <p className="text-[11px] mt-1" style={{ color: '#A89890' }}>Auto-detected, editable.</p>
+                </Field>
+              </div>
 
-            {/* Delivery Zone */}
-            <div>
+              <div ref={cityRef}>
+                <Field label="City" required error={errors.city}>
+                  <Input
+                    value={form.city}
+                    onChange={e => updateForm('city', e.target.value)}
+                    placeholder="City"
+                    hasError={!!errors.city}
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="State / Province" hint="optional">
+                <Input
+                  value={form.state}
+                  onChange={e => updateForm('state', e.target.value)}
+                  placeholder="State / Province"
+                />
+              </Field>
+
+              <div ref={postCodeRef}>
+                <Field label="Post Code / Zip Code" required error={errors.postCode}>
+                  <Input
+                    value={form.postCode}
+                    onChange={e => updateForm('postCode', e.target.value)}
+                    placeholder="Post / Zip code"
+                    hasError={!!errors.postCode}
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div ref={addressLineRef}>
+              <Field label="Address Line" required error={errors.addressLine}>
+                <Textarea
+                  value={form.addressLine}
+                  onChange={e => updateForm('addressLine', e.target.value)}
+                  placeholder="House/flat, road, area"
+                />
+              </Field>
+            </div>
+
+            {/* Delivery options (renamed) */}
+            <div ref={deliveryZoneRef}>
               <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8C7269' }}>
-                ডেলিভারি এলাকা <span style={{ color: '#e87c55' }}>*</span>
+                Delivery Option <span style={{ color: '#e87c55' }}>*</span>
               </p>
               <div className="grid grid-cols-2 gap-3">
-                {DELIVERY_ZONES.map(zone => (
-                  <motion.button key={zone.id} type="button"
-                    whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-                    onClick={() => { setDeliveryZone(zone.id); setErrors(p => ({ ...p, deliveryZone: '' })); }}
-                    className="text-left p-3 rounded-2xl transition-all"
-                    style={{
-                      border: deliveryZone === zone.id ? '2px solid #B07D6B' : '1.5px solid rgba(176,125,107,0.2)',
-                      background: deliveryZone === zone.id ? 'rgba(176,125,107,0.08)' : 'rgba(255,255,255,0.6)',
-                    }}>
-                    <span className="text-xl">{zone.icon}</span>
-                    <p className="font-semibold text-sm mt-1" style={{ color: '#2C2C2C' }}>{zone.label}</p>
-                    <p className="text-sm font-bold mt-1" style={{ color: '#B07D6B' }}>৳{zone.charge}</p>
-                  </motion.button>
-                ))}
+                {DELIVERY_ZONES.map(zone => {
+                  const Icon = zone.icon;
+                  return (
+                    <motion.button key={zone.id} type="button"
+                      whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                      onClick={() => { setDeliveryZone(zone.id); setErrors(p => ({ ...p, deliveryZone: '' })); }}
+                      className="text-left p-3 rounded-2xl transition-all"
+                      style={{
+                        border: deliveryZone === zone.id ? '2px solid #B07D6B' : '1.5px solid rgba(176,125,107,0.2)',
+                        background: deliveryZone === zone.id ? 'rgba(176,125,107,0.08)' : 'rgba(255,255,255,0.6)',
+                      }}>
+                      <Icon size={20} style={{ color: '#B07D6B' }} />
+                      <p className="font-semibold text-sm mt-1" style={{ color: '#2C2C2C' }}>{zone.label}</p>
+                      <p className="text-[11px]" style={{ color: '#9A8880' }}>{zone.sub}</p>
+                      <p className="text-sm font-bold mt-1" style={{ color: '#B07D6B' }}>৳{zone.charge}</p>
+                    </motion.button>
+                  );
+                })}
               </div>
               {errors.deliveryZone && (
                 <p className="text-xs mt-1 flex items-center gap-1" style={{ color: '#C0504D' }}>
@@ -693,11 +852,11 @@ const CheckoutForm: React.FC = () => {
             </div>
 
             {/* Notes */}
-            <Field label="বিশেষ নির্দেশনা (ঐচ্ছিক)">
+            <Field label="Special Instructions" hint="optional">
               <Textarea
                 value={form.notes}
                 onChange={e => updateForm('notes', e.target.value)}
-                placeholder="কোনো বিশেষ কিছু জানাতে চাইলে লিখুন..."
+                placeholder="Anything else we should know..."
               />
             </Field>
           </div>
@@ -706,13 +865,13 @@ const CheckoutForm: React.FC = () => {
 
           {/* ── Payment Method ── */}
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-charcoal">💳 পেমেন্ট পদ্ধতি</p>
+            <p className="text-sm font-semibold text-charcoal">💳 Payment Method</p>
             <div className="space-y-2">
 
               {/* ── Cash on Delivery ── */}
               <div className="rounded-2xl overflow-hidden"
                 style={{ border: paymentMethod === 'cod' ? '2px solid #B07D6B' : '1.5px solid rgba(176,125,107,0.35)' }}>
-                <button onClick={() => setPaymentMethod('cod')}
+                <button onClick={() => selectPaymentMethod('cod')}
                   className="w-full flex items-center gap-3 p-3 text-left transition-all"
                   style={{ background: paymentMethod === 'cod' ? 'rgba(176,125,107,0.10)' : 'rgba(255,255,255,0.85)' }}>
                   <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0"
@@ -721,8 +880,8 @@ const CheckoutForm: React.FC = () => {
                   </div>
                   <Truck size={18} style={{ color: '#B07D6B' }} />
                   <div className="flex-1">
-                    <p className="font-semibold text-[14px] text-[#2A2A2A]">ক্যাশ অন ডেলিভারি</p>
-                    <p className="text-xs text-[#6B5B55]">পণ্য পেলে টাকা দিন</p>
+                    <p className="font-semibold text-[14px] text-[#2A2A2A]">Cash on Delivery</p>
+                    <p className="text-xs text-[#6B5B55]">Pay when you receive your order</p>
                   </div>
                 </button>
                 <AnimatePresence>
@@ -733,92 +892,8 @@ const CheckoutForm: React.FC = () => {
                         style={{ background: 'rgba(176,125,107,0.04)', borderTop: '1px solid rgba(176,125,107,0.15)' }}>
                         <p className="text-sm text-[#6C5A54] flex items-center gap-2">
                           <CheckCircle size={15} className="text-green-500 flex-shrink-0" />
-                          ডেলিভারির সময় ৳{total.toFixed(0)} পরিশোধ করুন। কোনো অগ্রিম প্রয়োজন নেই।
+                          Pay ৳{total.toFixed(0)} on delivery. No advance payment needed.
                         </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* ── bKash ── */}
-              <div className="rounded-2xl overflow-hidden"
-                style={{ border: paymentMethod === 'bkash' ? '2px solid #B07D6B' : '1.5px solid rgba(176,125,107,0.35)' }}>
-                <button onClick={() => setPaymentMethod('bkash')}
-                  className="w-full flex items-center gap-3 p-3 text-left transition-all"
-                  style={{ background: paymentMethod === 'bkash' ? 'rgba(176,125,107,0.10)' : 'rgba(255,255,255,0.85)' }}>
-                  <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0"
-                    style={{ borderColor: paymentMethod === 'bkash' ? '#B07D6B' : '#ccc' }}>
-                    {paymentMethod === 'bkash' && <div className="w-4 h-4 rounded-full" style={{ background: '#B07D6B' }} />}
-                  </div>
-                  <span className="text-lg font-bold" style={{ color: '#E2136E' }}>b</span>
-                  <div className="flex-1">
-                    <p className="font-semibold text-[14px] text-[#2A2A2A]">বিকাশ</p>
-                    <p className="text-xs text-[#6B5B55]">বিকাশে পেমেন্ট করুন</p>
-                  </div>
-                </button>
-                <AnimatePresence>
-                  {paymentMethod === 'bkash' && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      <div className="px-4 pb-4 pt-3 space-y-3"
-                        style={{ background: 'rgba(176,125,107,0.04)', borderTop: '1px solid rgba(176,125,107,0.15)' }}>
-                        <p className="text-sm font-semibold text-charcoal">পেমেন্ট পাঠানোর নির্দেশনা:</p>
-                        <ol className="text-sm space-y-1" style={{ color: '#6C5A54' }}>
-                          <li>১. নিচের নম্বরে <strong>৳{total.toFixed(0)}</strong> পাঠান:</li>
-                        </ol>
-                        <CopyNumber />
-                        <ol className="text-sm space-y-1" style={{ color: '#6C5A54' }}>
-                          <li>২. আপনার বিকাশ নাম্বারের শেষ ৪ ডিজিট লিখুন</li>
-                          <li>৩. আমরা ২৪ ঘণ্টার মধ্যে যাচাই করব</li>
-                        </ol>
-                        <Field label="শেষের ৪ সংখা" required error={errors.transactionId}>
-                          <Input value={transactionId}
-                            onChange={e => { setTransactionId(e.target.value); setErrors(p => ({ ...p, transactionId: '' })); }}
-                            placeholder="যেমন : 3060" hasError={!!errors.transactionId} />
-                        </Field>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* ── Nagad ── */}
-              <div className="rounded-2xl overflow-hidden"
-                style={{ border: paymentMethod === 'nagad' ? '2px solid #B07D6B' : '1.5px solid rgba(176,125,107,0.35)' }}>
-                <button onClick={() => setPaymentMethod('nagad')}
-                  className="w-full flex items-center gap-3 p-3 text-left transition-all"
-                  style={{ background: paymentMethod === 'nagad' ? 'rgba(176,125,107,0.10)' : 'rgba(255,255,255,0.85)' }}>
-                  <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0"
-                    style={{ borderColor: paymentMethod === 'nagad' ? '#B07D6B' : '#ccc' }}>
-                    {paymentMethod === 'nagad' && <div className="w-4 h-4 rounded-full" style={{ background: '#B07D6B' }} />}
-                  </div>
-                  <span className="text-lg font-bold" style={{ color: '#F15A22' }}>N</span>
-                  <div className="flex-1">
-                    <p className="font-semibold text-[14px] text-[#2A2A2A]">নগদ</p>
-                    <p className="text-xs text-[#6B5B55]">নগদে পেমেন্ট করুন</p>
-                  </div>
-                </button>
-                <AnimatePresence>
-                  {paymentMethod === 'nagad' && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      <div className="px-4 pb-4 pt-3 space-y-3"
-                        style={{ background: 'rgba(176,125,107,0.04)', borderTop: '1px solid rgba(176,125,107,0.15)' }}>
-                        <p className="text-sm font-semibold text-charcoal">পেমেন্ট পাঠানোর নির্দেশনা:</p>
-                        <ol className="text-sm space-y-1" style={{ color: '#6C5A54' }}>
-                          <li>১. নিচের নম্বরে <strong>৳{total.toFixed(0)}</strong> পাঠান:</li>
-                        </ol>
-                        <CopyNumber />
-                        <ol className="text-sm space-y-1" style={{ color: '#6C5A54' }}>
-                          <li>২. আপনার নগদ নাম্বারের শেষ ৪ ডিজিট লিখুন</li>
-                          <li>৩. আমরা ২৪ ঘণ্টার মধ্যে যাচাই করব</li>
-                        </ol>
-                        <Field label="শেষের ৪ সংখা" required error={errors.transactionId}>
-                          <Input value={transactionId}
-                            onChange={e => { setTransactionId(e.target.value); setErrors(p => ({ ...p, transactionId: '' })); }}
-                            placeholder="যেমন : 3060" hasError={!!errors.transactionId} />
-                        </Field>
                       </div>
                     </motion.div>
                   )}
@@ -828,7 +903,7 @@ const CheckoutForm: React.FC = () => {
               {/* ── Card / Stripe ── */}
               <div className="rounded-2xl overflow-hidden"
                 style={{ border: paymentMethod === 'stripe' ? '2px solid #635BFF' : '1.5px solid rgba(176,125,107,0.35)' }}>
-                <button onClick={() => setPaymentMethod('stripe')}
+                <button onClick={() => selectPaymentMethod('stripe')}
                   className="w-full flex items-center gap-3 p-3 text-left transition-all"
                   style={{ background: paymentMethod === 'stripe' ? 'rgba(99,91,255,0.06)' : 'rgba(255,255,255,0.85)' }}>
                   <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0"
@@ -849,11 +924,16 @@ const CheckoutForm: React.FC = () => {
                   {paymentMethod === 'stripe' && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      <div className="px-4 pb-4 pt-3 space-y-3"
+                      <div ref={cardholderRef} className="px-4 pb-4 pt-3 space-y-3"
                         style={{ background: 'rgba(99,91,255,0.03)', borderTop: '1px solid rgba(99,91,255,0.15)' }}>
 
                         {/* Stripe card fields */}
                         <StripeCardField onReady={setStripeReady} cardholderName={cardForm.cardholderName} onCardholderNameChange={name => setCardForm(p => ({ ...p, cardholderName: name }))} />
+                        {cardFormErrors.cardholderName && (
+                          <p className="text-xs flex items-center gap-1" style={{ color: '#C0504D' }}>
+                            <AlertCircle size={11} />{cardFormErrors.cardholderName}
+                          </p>
+                        )}
 
                         {/* Use shipping address as billing */}
                         <label className="flex items-center gap-2 cursor-pointer">
@@ -875,6 +955,43 @@ const CheckoutForm: React.FC = () => {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* ── SSLCommerz ── */}
+              <div className="rounded-2xl overflow-hidden"
+                style={{ border: paymentMethod === 'sslcommerz' ? '2px solid #B07D6B' : '1.5px solid rgba(176,125,107,0.35)' }}>
+                <button onClick={() => selectPaymentMethod('sslcommerz')}
+                  className="w-full flex items-center gap-3 p-3 text-left transition-all"
+                  style={{ background: paymentMethod === 'sslcommerz' ? 'rgba(176,125,107,0.10)' : 'rgba(255,255,255,0.85)' }}>
+                  <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                    style={{ borderColor: paymentMethod === 'sslcommerz' ? '#B07D6B' : '#ccc' }}>
+                    {paymentMethod === 'sslcommerz' && <div className="w-4 h-4 rounded-full" style={{ background: '#B07D6B' }} />}
+                  </div>
+                  <Shield size={18} style={{ color: '#B07D6B' }} />
+                  <div className="flex-1">
+                    <p className="font-semibold text-[14px] text-[#2A2A2A]">SSLCommerz</p>
+                    <p className="text-xs text-[#6B5B55]">Pay via local cards, mobile banking & more</p>
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {paymentMethod === 'sslcommerz' && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="px-4 pb-4 pt-3 space-y-3"
+                        style={{ background: 'rgba(176,125,107,0.04)', borderTop: '1px solid rgba(176,125,107,0.15)' }}>
+                        <Field label="Email" hint="optional, for payment receipt">
+                          <Input
+                            type="email"
+                            value={sslEmail}
+                            onChange={e => setSslEmail(e.target.value)}
+                            placeholder="you@example.com"
+                          />
+                        </Field>
+                        <p className="text-xs text-[#6C5A54]">You'll be redirected to a secure SSLCommerz page to complete payment.</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
@@ -883,12 +1000,12 @@ const CheckoutForm: React.FC = () => {
           {/* ── Coupon ── */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8C7269' }}>
-              <Tag size={11} className="inline mr-1" />কুপন কোড (ঐচ্ছিক)
+              <Tag size={11} className="inline mr-1" />Coupon Code <span style={{ fontWeight: 400 }}>(optional)</span>
             </p>
             <div className="flex gap-2">
               <input value={couponInput}
                 onChange={e => { setCouponInput(e.target.value); setCouponError(''); if (couponApplied) { setCouponApplied(false); setCouponDiscount(0); } }}
-                placeholder="কুপন কোড লিখুন"
+                placeholder="Enter coupon code"
                 className="flex-1 px-3 py-2.5 rounded-xl text-sm outline-none"
                 style={{ background: 'rgba(255,255,255,0.8)', border: `1.5px solid ${couponError ? 'rgba(192,80,77,0.4)' : couponApplied ? 'rgba(74,140,92,0.4)' : 'rgba(176,125,107,0.2)'}`, color: '#2C2C2C' }}
                 onKeyDown={e => e.key === 'Enter' && applyCoupon()}
@@ -896,11 +1013,11 @@ const CheckoutForm: React.FC = () => {
               <button onClick={applyCoupon}
                 className="px-4 py-2.5 rounded-xl text-sm font-semibold"
                 style={{ background: couponApplied ? 'rgba(74,140,92,0.15)' : 'rgba(176,125,107,0.15)', color: couponApplied ? '#4A8C5C' : '#B07D6B', border: 'none', cursor: 'pointer' }}>
-                {couponApplied ? '✓ হয়েছে' : 'প্রয়োগ করুন'}
+                {couponApplied ? '✓ Applied' : 'Apply'}
               </button>
             </div>
             {couponError && <p className="text-xs mt-1" style={{ color: '#C0504D' }}>{couponError}</p>}
-            {couponApplied && <p className="text-xs mt-1" style={{ color: '#4A8C5C' }}>✓ ৳{couponDiscount} ছাড় পেয়েছেন!</p>}
+            {couponApplied && <p className="text-xs mt-1" style={{ color: '#4A8C5C' }}>✓ You saved ৳{couponDiscount}!</p>}
           </div>
 
           <div className="h-px" style={{ background: 'rgba(176,125,107,0.15)' }} />
@@ -908,28 +1025,28 @@ const CheckoutForm: React.FC = () => {
           {/* ── Price Summary ── */}
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-warm-gray">সাবটোটাল</span>
+              <span className="text-warm-gray">Subtotal</span>
               <span className="font-medium">৳{subtotal.toFixed(0)}</span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between" style={{ color: '#4A8C5C' }}>
-                <span>ছাড়</span><span>−৳{discount.toFixed(0)}</span>
+                <span>Discount</span><span>−৳{discount.toFixed(0)}</span>
               </div>
             )}
             {couponApplied && couponDiscount > 0 && (
               <div className="flex justify-between" style={{ color: '#4A8C5C' }}>
-                <span>কুপন ছাড়</span><span>−৳{couponDiscount.toFixed(0)}</span>
+                <span>Coupon Discount</span><span>−৳{couponDiscount.toFixed(0)}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-warm-gray">ডেলিভারি চার্জ</span>
+              <span className="text-warm-gray">Delivery Charge</span>
               <span className="font-medium" style={{ color: '#B07D6B' }}>
-                {deliveryZone ? `৳${shippingCharge}` : 'এলাকা বেছে নিন'}
+                {deliveryZone ? `৳${shippingCharge}` : 'Select an option'}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2"
               style={{ borderTop: '1px solid rgba(176,125,107,0.15)' }}>
-              <span className="font-bold text-charcoal text-base">মোট</span>
+              <span className="font-bold text-charcoal text-base">Total</span>
               <span className="heading-serif text-2xl font-bold" style={{ color: '#B07D6B' }}>৳{total.toFixed(0)}</span>
             </div>
           </div>
@@ -941,7 +1058,7 @@ const CheckoutForm: React.FC = () => {
             whileTap={{ scale: 0.97 }}
             className="w-full py-4 rounded-2xl font-bold text-sm tracking-wider uppercase text-white"
             style={{ background: 'linear-gradient(135deg, #B07D6B 0%, #C4956A 50%, #B07D6B 100%)', border: 'none', cursor: 'pointer' }}>
-            অর্ডার রিভিউ করুন →
+            Review Order →
           </motion.button>
 
           {/* Gateway error popup */}
@@ -967,7 +1084,7 @@ const CheckoutForm: React.FC = () => {
           {/* Security badge */}
           <div className="flex items-center justify-center gap-2 text-xs" style={{ color: '#9A8880' }}>
             <Shield size={12} style={{ color: '#B07D6B' }} />
-            নিরাপদ চেকআউট • SSL এনক্রিপ্টেড
+            Secure Checkout • SSL Encrypted
           </div>
         </div>
       </div>
@@ -989,7 +1106,7 @@ const CheckoutForm: React.FC = () => {
               {/* Modal Header */}
               <div className="flex items-center justify-between p-5 sticky top-0"
                 style={{ background: '#FDF8F5', borderBottom: '1px solid rgba(176,125,107,0.15)' }}>
-                <h2 className="heading-serif text-lg font-bold text-charcoal">অর্ডার নিশ্চিত করুন</h2>
+                <h2 className="heading-serif text-lg font-bold text-charcoal">Confirm Your Order</h2>
                 <button onClick={() => setShowReview(false)}
                   className="p-1.5 rounded-lg" style={{ background: 'rgba(176,125,107,0.1)', color: '#B07D6B' }}>
                   <X size={16} />
@@ -1001,10 +1118,13 @@ const CheckoutForm: React.FC = () => {
                 {/* Customer Info */}
                 <div className="rounded-2xl p-4"
                   style={{ background: 'rgba(176,125,107,0.06)', border: '1px solid rgba(176,125,107,0.15)' }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#B07D6B' }}>📍 ডেলিভারি তথ্য</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#B07D6B' }}>📍 Delivery Information</p>
                   <p className="text-sm font-semibold text-charcoal">{form.fullName}</p>
-                  <p className="text-sm text-warm-gray">{form.phone}</p>
-                  <p className="text-sm text-warm-gray">{form.address}</p>
+                  <p className="text-sm text-warm-gray">{form.dialCode} {form.phone}</p>
+                  <p className="text-sm text-warm-gray">
+                    {form.addressLine}{form.city ? `, ${form.city}` : ''}{form.state ? `, ${form.state}` : ''} {form.postCode}
+                  </p>
+                  <p className="text-sm text-warm-gray">{COUNTRIES.find(c => c.iso2 === form.country)?.name}</p>
                   <p className="text-xs mt-1 font-medium" style={{ color: '#B07D6B' }}>
                     {DELIVERY_ZONES.find(z => z.id === deliveryZone)?.label} — ৳{shippingCharge}
                   </p>
@@ -1013,24 +1133,21 @@ const CheckoutForm: React.FC = () => {
                 {/* Payment Info */}
                 <div className="rounded-2xl p-4"
                   style={{ background: 'rgba(176,125,107,0.06)', border: '1px solid rgba(176,125,107,0.15)' }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#B07D6B' }}>💳 পেমেন্ট</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#B07D6B' }}>💳 Payment</p>
                   <p className="text-sm text-charcoal">
-                    {paymentMethod === 'cod' ? 'ক্যাশ অন ডেলিভারি'
-                      : paymentMethod === 'bkash' ? 'বিকাশ'
-                        : paymentMethod === 'nagad' ? 'নগদ'
-                          : paymentMethod === 'stripe' ? 'Credit / Debit Card (Stripe)'
-                            : 'SSLCommerz'}
+                    {paymentMethod === 'cod' ? 'Cash on Delivery'
+                      : paymentMethod === 'stripe' ? 'Credit / Debit Card (Stripe)'
+                        : 'SSLCommerz'}
                   </p>
                   {paymentMethod === 'stripe' && cardForm.cardholderName && (
                     <p className="text-xs text-warm-gray mt-1">Cardholder: {cardForm.cardholderName}</p>
                   )}
-                  {transactionId && <p className="text-xs text-warm-gray mt-1">TXN: {transactionId}</p>}
                 </div>
 
                 {/* Items */}
                 <div className="rounded-2xl p-4"
                   style={{ background: 'rgba(176,125,107,0.06)', border: '1px solid rgba(176,125,107,0.15)' }}>
-                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#B07D6B' }}>🛍️ অর্ডার আইটেম</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#B07D6B' }}>🛍️ Order Items</p>
                   <div className="space-y-2">
                     {checkoutItems.map(item => (
                       <div key={item.product.id} className="flex items-center gap-3">
@@ -1054,7 +1171,7 @@ const CheckoutForm: React.FC = () => {
 
                 {/* Total */}
                 <div className="flex justify-between items-center px-1">
-                  <span className="font-bold text-charcoal">মোট পরিমাণ</span>
+                  <span className="font-bold text-charcoal">Total Amount</span>
                   <span className="heading-serif text-xl font-bold" style={{ color: '#B07D6B' }}>৳{total.toFixed(0)}</span>
                 </div>
 
@@ -1063,7 +1180,7 @@ const CheckoutForm: React.FC = () => {
                   <button onClick={() => setShowReview(false)}
                     className="flex-1 py-3.5 rounded-2xl font-semibold text-sm"
                     style={{ background: 'rgba(176,125,107,0.1)', color: '#B07D6B', border: 'none', cursor: 'pointer' }}>
-                    ← ফিরে যান
+                    ← Back
                   </button>
                   <motion.button
                     onClick={handlePlaceOrder}
@@ -1071,7 +1188,7 @@ const CheckoutForm: React.FC = () => {
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                     className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white"
                     style={{ background: placing ? 'rgba(176,125,107,0.5)' : 'linear-gradient(135deg, #B07D6B, #C4956A)', border: 'none', cursor: placing ? 'not-allowed' : 'pointer' }}>
-                    {placing ? 'প্রসেস হচ্ছে...' : `অর্ডার করুন — ৳${total.toFixed(0)}`}
+                    {placing ? 'Processing...' : `Place Order — ৳${total.toFixed(0)}`}
                   </motion.button>
                 </div>
               </div>
