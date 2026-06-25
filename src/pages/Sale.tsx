@@ -1,5 +1,5 @@
 /* ===================================================
-   Orivelle - Sale Page
+                  Sale Page
    Dedicated page for sale / discounted products
    =================================================== */
 
@@ -11,18 +11,11 @@ import { Grid3X3, Grid2X2, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 
 import { ProductCard } from '@/components/home';
 import { FadeIn, Button, Select } from '@/components/ui';
-import { useCategoryStore, useProductStore } from '@/store';
+import { useProductStore } from '@/store';
 import { useContentStore } from '@/store/contentStore';
 
-/* ─── Fisher-Yates shuffle (returns a new array) ─── */
-const shuffleArray = <T,>(arr: T[]): T[] => {
-    const result = [...arr];
-    for (let i = result.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [result[i], result[j]] = [result[j], result[i]];
-    }
-    return result;
-};
+/* ─── Size options ─── */
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
 
 /* ─────────────────────────────────────────────
    SALE HERO BANNER
@@ -57,35 +50,24 @@ export const SaleHero: React.FC<{
                 <video
                     src={banner.videoUrl}
                     className="absolute inset-0 w-full h-full object-cover z-0"
-                    muted
-                    loop
-                    autoPlay
-                    playsInline
+                    muted loop autoPlay playsInline
                 />
             )}
-
-            {/* Decorative circle */}
             <div
                 className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-25"
                 style={{ background: 'radial-gradient(circle, #B07D6B 0%, transparent 65%)' }}
             />
-
             <div className="absolute inset-0 bg-black/30" />
 
             <div className="relative z-10 px-8 md:px-16 py-8 md:py-10 flex flex-col md:flex-row items-center gap-8">
-                {/* Left: text */}
                 <div className="flex-1 text-center md:text-left">
-
                     <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-light mb-4 leading-tight text-white">
                         {banner?.title || 'Sale Collection'}
                     </h1>
-
                     <p className="text-sm md:text-base mb-0 max-w-xs md:max-w-sm text-white/80" style={{ lineHeight: '1.7' }}>
                         {banner?.subtitle || 'Luxury pieces, exceptional value. Limited time offers.'}
                     </p>
                 </div>
-
-                {/* Right: decorative icon */}
                 <div className="flex-shrink-0 hidden md:flex flex-col items-center gap-3">
                     <motion.div
                         animate={{ rotate: [0, 3, -3, 0] }}
@@ -107,7 +89,6 @@ export const SaleHero: React.FC<{
 ───────────────────────────────────────────── */
 export const SalePage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const { categories } = useCategoryStore();
     const { content } = useContentStore();
 
     const {
@@ -116,51 +97,73 @@ export const SalePage: React.FC = () => {
         loading: { list: loading },
     } = useProductStore();
 
-    useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
+    useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
     const [showFilters, setShowFilters] = useState(false);
     const [gridCols, setGridCols] = useState<3 | 4>(4);
 
-    const categoryFilter = searchParams.get('category') || '';
     const sortFilter = searchParams.get('sort') || 'newest';
     const searchQuery = searchParams.get('q') || '';
 
-    const [priceRange, setPriceRange] = useState<[number, number]>([299, 10000]);
-    const [inStockOnly, setInStockOnly] = useState(false);
+    /* ── Filter state ── */
+    const [availability, setAvailability] = useState<'all' | 'in_stock' | 'out_of_stock'>('all');
+    const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+
+    /* ── Derived max price ── */
+    const maxPrice = useMemo(() => {
+        const saleProducts = allProducts.filter(p => p.isOnSale === true || p.comparePrice != null);
+        if (saleProducts.length === 0) return 10000;
+        return Math.ceil(Math.max(...saleProducts.map(p => Number(p.price) || 0)) / 100) * 100 || 10000;
+    }, [allProducts]);
+
+    const toggleSize = (size: string) => {
+        setSelectedSizes(prev =>
+            prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
+        );
+    };
 
     const filteredProducts = useMemo(() => {
-        // Filter specifically for sale products first
         let filtered = allProducts.filter(
-            product => product.isOnSale === true || product.comparePrice != null
+            p => p.isOnSale === true || p.comparePrice != null
         );
 
         if (searchQuery) {
-            filtered = filtered.filter(product =>
-                product.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            filtered = filtered.filter(p =>
+                p.name?.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
 
-        if (categoryFilter) {
-            filtered = filtered.filter(product => product.categorySlug === categoryFilter);
+        /* Availability */
+        if (availability === 'in_stock') {
+            filtered = filtered.filter(p => p.stock > 0);
+        } else if (availability === 'out_of_stock') {
+            filtered = filtered.filter(p => p.stock <= 0);
         }
 
-        if (inStockOnly) {
-            filtered = filtered.filter(product => product.stock > 0);
+        /* Sizes */
+        if (selectedSizes.length > 0) {
+            filtered = filtered.filter(p =>
+                Array.isArray(p.sizes) && selectedSizes.some(s => p.sizes.includes(s))
+            );
         }
 
-        filtered = filtered.filter(product => {
-            const price = Number(product.price) || 0;
+        /* Price */
+        filtered = filtered.filter(p => {
+            const price = Number(p.price) || 0;
             return price >= priceRange[0] && price <= priceRange[1];
         });
 
+        /* Sort */
         switch (sortFilter) {
             case 'price_asc':
                 filtered.sort((a, b) => Number(a.price) - Number(b.price));
                 break;
             case 'price_desc':
                 filtered.sort((a, b) => Number(b.price) - Number(a.price));
+                break;
+            case 'featured':
+                filtered.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
                 break;
             case 'newest':
             default:
@@ -169,7 +172,8 @@ export const SalePage: React.FC = () => {
         }
 
         return filtered;
-    }, [allProducts, searchQuery, categoryFilter, priceRange, inStockOnly, sortFilter]);
+    }, [allProducts, searchQuery, availability, selectedSizes, priceRange, sortFilter]);
+
     const updateSort = (sort: string) => {
         const params = new URLSearchParams(searchParams);
         params.set('sort', sort);
@@ -177,19 +181,18 @@ export const SalePage: React.FC = () => {
     };
 
     const clearFilters = () => {
-        setSearchParams({});
-        setPriceRange([299, 10000]);
-        setInStockOnly(false);
+        setAvailability('all');
+        setSelectedSizes([]);
+        setPriceRange([0, maxPrice]);
     };
 
     const activeFilterCount = [
-        categoryFilter,
-        priceRange[0] > 299 || priceRange[1] < 10000,
-        inStockOnly,
-        searchQuery,
+        availability !== 'all',
+        selectedSizes.length > 0,
+        priceRange[0] > 0 || priceRange[1] < maxPrice,
     ].filter(Boolean).length;
 
-    /* GTM DATA LAYER — view_item_list */
+    /* GTM */
     useEffect(() => {
         if (filteredProducts.length === 0) return;
         window.dataLayer = window.dataLayer || [];
@@ -198,36 +201,107 @@ export const SalePage: React.FC = () => {
             event: 'view_item_list',
             ecommerce: {
                 item_list_name: 'Sale Collection',
-                items: filteredProducts.slice(0, 20).map((product, index) => ({
-                    item_id: product.id,
-                    item_name: product.name,
-                    item_category: product.category || '',
-                    price: Number(product.price) || 0,
-                    index: index,
+                items: filteredProducts.slice(0, 20).map((p, i) => ({
+                    item_id: p.id,
+                    item_name: p.name,
+                    item_category: p.category || '',
+                    price: Number(p.price) || 0,
+                    index: i,
                 })),
             },
         });
     }, [filteredProducts]);
 
+    /* ── Shared filter panel ── */
+    const FilterPanel = () => (
+        <div className="space-y-7">
+
+            {/* Availability */}
+            <div>
+                <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">
+                    Availability
+                </h3>
+                <div className="flex flex-col gap-2">
+                    {(['all', 'in_stock', 'out_of_stock'] as const).map(opt => (
+                        <label key={opt} className="flex items-center gap-2.5 cursor-pointer">
+                            <input
+                                type="radio"
+                                name="availability-sale"
+                                checked={availability === opt}
+                                onChange={() => setAvailability(opt)}
+                                className="accent-rose-gold w-4 h-4"
+                            />
+                            <span className="text-sm text-[#6B5B55]">
+                                {opt === 'all' ? 'All' : opt === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+                            </span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            {/* Size */}
+            <div>
+                <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">
+                    Size
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                    {SIZE_OPTIONS.map(size => (
+                        <button
+                            key={size}
+                            type="button"
+                            onClick={() => toggleSize(size)}
+                            className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${selectedSizes.includes(size)
+                                ? 'bg-rose-gold text-white border-rose-gold font-medium'
+                                : 'border-blush/40 text-[#6B5B55] hover:border-rose-gold'
+                                }`}
+                        >
+                            {size}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Price Range */}
+            <div>
+                <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">
+                    Price Range
+                </h3>
+                <input
+                    type="range"
+                    min={0}
+                    max={maxPrice}
+                    step={50}
+                    value={priceRange[1]}
+                    onChange={e => setPriceRange([0, parseInt(e.target.value)])}
+                    className="w-full accent-rose-gold"
+                />
+                <div className="flex justify-between text-sm text-[#6B5B55] mt-1.5">
+                    <span>৳0</span>
+                    <span>{priceRange[1] >= maxPrice ? 'No limit' : `৳${priceRange[1].toLocaleString()}`}</span>
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <div className="min-h-screen pt-24 pb-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                {/* ── Sale Hero Banner ── */}
+                {/* Sale Hero Banner */}
                 {content.saleBanners?.[0]?.active !== false && (
                     <SaleHero banner={content.saleBanners?.[0]} />
                 )}
 
-                {/* ── Piece count under hero banner ── */}
+                {/* Piece count */}
                 <FadeIn>
                     <p className="text-[#6B5B55] text-sm mb-6 -mt-4">
-                        {filteredProducts.length}{' '}
-                        {filteredProducts.length === 1 ? 'piece' : 'pieces'} found
+                        {filteredProducts.length}{' '}{filteredProducts.length === 1 ? 'piece' : 'pieces'} found
                     </p>
                 </FadeIn>
 
                 {/* ── Toolbar ── */}
                 <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+                    {/* Left: Filter toggle */}
                     <div className="flex items-center gap-3">
                         <Button
                             variant="ghost"
@@ -250,10 +324,12 @@ export const SalePage: React.FC = () => {
                         )}
                     </div>
 
+                    {/* Right: Sort + grid toggle */}
                     <div className="flex items-center gap-3">
                         <Select
                             options={[
                                 { value: 'newest', label: 'Newest First' },
+                                { value: 'featured', label: 'Featured' },
                                 { value: 'price_asc', label: 'Price: Low to High' },
                                 { value: 'price_desc', label: 'Price: High to Low' },
                             ]}
@@ -278,37 +354,25 @@ export const SalePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* ══════════════════════════════════════════════════
-            MOBILE FILTER BOTTOM SHEET
-        ══════════════════════════════════════════════════ */}
+                {/* ── Mobile Filter Bottom Sheet ── */}
                 <AnimatePresence>
                     {showFilters && (
                         <>
-                            {/* Backdrop */}
                             <motion.div
                                 key="mobile-filter-backdrop"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                                 className="fixed inset-0 bg-black/40 z-40 md:hidden"
                                 onClick={() => setShowFilters(false)}
                             />
-
-                            {/* Sheet */}
                             <motion.div
                                 key="mobile-filter-sheet"
-                                initial={{ y: '100%' }}
-                                animate={{ y: 0 }}
-                                exit={{ y: '100%' }}
+                                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
                                 transition={{ type: 'spring', damping: 28, stiffness: 260 }}
                                 className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white rounded-t-3xl shadow-2xl max-h-[82vh] overflow-y-auto"
                             >
-                                {/* Handle bar */}
                                 <div className="flex justify-center pt-3 pb-1">
                                     <div className="w-10 h-1 rounded-full bg-gray-300" />
                                 </div>
-
-                                {/* Header */}
                                 <div className="flex items-center justify-between px-5 py-3 border-b border-blush/30">
                                     <span className="text-base font-semibold text-charcoal">Filters</span>
                                     <button
@@ -320,83 +384,9 @@ export const SalePage: React.FC = () => {
                                         <X size={18} className="text-[#6B5B55]" />
                                     </button>
                                 </div>
-
-                                {/* Filter content */}
-                                <div className="px-5 py-5 space-y-6">
-
-                                    {/* Category */}
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">
-                                            Category
-                                        </h3>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const p = new URLSearchParams(searchParams);
-                                                    p.delete('category');
-                                                    setSearchParams(p);
-                                                }}
-                                                className={`text-sm px-3 py-2 rounded-xl border transition-colors text-left ${!categoryFilter
-                                                    ? 'bg-rose-gold text-white border-rose-gold font-medium'
-                                                    : 'border-blush/40 text-[#6B5B55] hover:border-rose-gold'
-                                                    }`}
-                                            >
-                                                All
-                                            </button>
-                                            {categories.map(cat => (
-                                                <button
-                                                    key={cat.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const p = new URLSearchParams(searchParams);
-                                                        p.set('category', cat.slug);
-                                                        setSearchParams(p);
-                                                    }}
-                                                    className={`text-sm px-3 py-2 rounded-xl border transition-colors text-left ${categoryFilter === cat.slug
-                                                        ? 'bg-rose-gold text-white border-rose-gold font-medium'
-                                                        : 'border-blush/40 text-[#6B5B55] hover:border-rose-gold'
-                                                        }`}
-                                                >
-                                                    {cat.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Price Range */}
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">
-                                            Price Range
-                                        </h3>
-                                        <input
-                                            type="range"
-                                            min={0}
-                                            max={10000}
-                                            step={1}
-                                            value={priceRange[1]}
-                                            onChange={e => setPriceRange([299, parseInt(e.target.value)])}
-                                            className="w-full accent-rose-gold"
-                                        />
-                                        <div className="flex justify-between text-sm text-[#6B5B55] mt-1">
-                                            <span>৳299</span>
-                                            <span>{priceRange[1] >= 10000 ? 'No limit' : `৳${priceRange[1]}`}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* In Stock */}
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={inStockOnly}
-                                            onChange={e => setInStockOnly(e.target.checked)}
-                                            className="w-5 h-5 rounded accent-rose-gold"
-                                        />
-                                        <span className="text-sm text-[#6B5B55]">In stock only</span>
-                                    </label>
-
-                                    {/* Apply / Clear */}
-                                    <div className="flex gap-3 pt-2 pb-safe">
+                                <div className="px-5 py-5">
+                                    <FilterPanel />
+                                    <div className="flex gap-3 pt-6 pb-safe">
                                         <button
                                             type="button"
                                             onClick={clearFilters}
@@ -430,80 +420,8 @@ export const SalePage: React.FC = () => {
                                 transition={{ duration: 0.3 }}
                                 className="hidden md:block flex-shrink-0 overflow-hidden"
                             >
-                                <div className="w-64 space-y-6">
-
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">
-                                            Category
-                                        </h3>
-                                        <div className="space-y-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const p = new URLSearchParams(searchParams);
-                                                    p.delete('category');
-                                                    setSearchParams(p);
-                                                }}
-                                                className={`block text-sm w-full text-left px-3 py-1.5 rounded-lg transition-colors ${!categoryFilter
-                                                    ? 'bg-blush-light text-charcoal font-medium'
-                                                    : 'text-[#6B5B55] hover:text-charcoal'
-                                                    }`}
-                                            >
-                                                All Categories
-                                            </button>
-                                            {categories.map(cat => (
-                                                <button
-                                                    key={cat.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const p = new URLSearchParams(searchParams);
-                                                        p.set('category', cat.slug);
-                                                        setSearchParams(p);
-                                                    }}
-                                                    className={`block text-sm w-full text-left px-3 py-1.5 rounded-lg transition-colors ${categoryFilter === cat.slug
-                                                        ? 'bg-blush-light text-charcoal font-medium'
-                                                        : 'text-[#6B5B55] hover:text-charcoal'
-                                                        }`}
-                                                >
-                                                    {cat.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Price Range */}
-                                    <div>
-                                        <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">
-                                            Price Range
-                                        </h3>
-                                        <div className="space-y-2">
-                                            <input
-                                                type="range"
-                                                min={0}
-                                                max={10000}
-                                                step={1}
-                                                value={priceRange[1]}
-                                                onChange={e => setPriceRange([299, parseInt(e.target.value)])}
-                                                className="w-full accent-rose-gold"
-                                            />
-                                            <div className="flex justify-between text-sm text-[#6B5B55]">
-                                                <span>৳299</span>
-                                                <span>{priceRange[1] >= 10000 ? 'No limit' : `৳${priceRange[1]}`}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* In Stock */}
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={inStockOnly}
-                                            onChange={e => setInStockOnly(e.target.checked)}
-                                            className="w-4 h-4 rounded accent-rose-gold"
-                                        />
-                                        <span className="text-sm text-[#6B5B55]">In stock only</span>
-                                    </label>
-
+                                <div className="w-64">
+                                    <FilterPanel />
                                 </div>
                             </motion.aside>
                         )}
@@ -521,7 +439,7 @@ export const SalePage: React.FC = () => {
                                     No products found
                                 </h3>
                                 <p className="text-[#6B5B55] mb-6">
-                                    No sale items at the moment. Check back soon!
+                                    No sale items matching your filters. Check back soon!
                                 </p>
                                 <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
                             </div>
