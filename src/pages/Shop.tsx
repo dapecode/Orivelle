@@ -11,8 +11,7 @@ import { Grid3X3, Grid2X2, SlidersHorizontal, X } from 'lucide-react';
 
 import { ProductCard } from '@/components/home';
 import { FadeIn, Button, Select } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
-import { useCategoryStore } from '@/store';
+import { useCategoryStore, useProductStore } from '@/store';
 
 /* ─── Fisher-Yates shuffle (returns a new array) ─── */
 const shuffleArray = <T,>(arr: T[]): T[] => {
@@ -31,10 +30,18 @@ export const ShopPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { categories } = useCategoryStore();
 
+  const {
+    products,
+    fetchProducts,
+    loading: { list: loading },
+  } = useProductStore();
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
   const [showFilters, setShowFilters] = useState(false);
   const [gridCols, setGridCols] = useState<3 | 4>(4);
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const categoryFilter = searchParams.get('category') || '';
   const sortFilter = searchParams.get('sort') || 'newest';
@@ -42,25 +49,6 @@ export const ShopPage: React.FC = () => {
 
   const [priceRange, setPriceRange] = useState<[number, number]>([299, 10000]);
   const [inStockOnly, setInStockOnly] = useState(false);
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching products:', error);
-    } else {
-      setProducts(shuffleArray(data || []));
-    }
-    setLoading(false);
-  };
 
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
@@ -72,12 +60,11 @@ export const ShopPage: React.FC = () => {
     }
 
     if (categoryFilter) {
-      filtered = filtered.filter(
-        product =>
-          product.category_slug === categoryFilter ||
-          product.category_name === categoryFilter ||
-          product.category === categoryFilter
-      );
+      filtered = filtered.filter(product => product.categorySlug === categoryFilter);
+    }
+
+    if (inStockOnly) {
+      filtered = filtered.filter(product => product.stock > 0);
     }
 
     filtered = filtered.filter(product => {
@@ -94,13 +81,12 @@ export const ShopPage: React.FC = () => {
         break;
       case 'newest':
       default:
-        // keep the shuffled order from fetchProducts
+        filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
         break;
     }
 
     return filtered;
-  }, [products, searchQuery, categoryFilter, priceRange, sortFilter]);
-
+  }, [products, searchQuery, categoryFilter, priceRange, inStockOnly, sortFilter]);
   const updateSort = (sort: string) => {
     const params = new URLSearchParams(searchParams);
     params.set('sort', sort);
@@ -140,7 +126,7 @@ export const ShopPage: React.FC = () => {
         items: filteredProducts.slice(0, 20).map((product, index) => ({
           item_id: product.id,
           item_name: product.name,
-          item_category: product.category || product.category_name || '',
+          item_category: product.category || '',
           price: Number(product.price) || 0,
           index: index,
         })),
