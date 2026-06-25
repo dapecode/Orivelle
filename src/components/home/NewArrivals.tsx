@@ -6,7 +6,6 @@ import { useProductStore } from '@/store';
 import { useAutoScroll } from './useAutoScroll';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
 
-
 export const NewArrivals: React.FC = () => {
     const { products, fetchProducts } = useProductStore();
     const navigate = useNavigate();

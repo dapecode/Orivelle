@@ -1,5 +1,5 @@
 /* ===================================================
-   GIrley GLow - New Arrivals Page
+   Orivelle - New Arrivals Page
    Dedicated page for the newest collection additions
    =================================================== */
 
@@ -11,8 +11,7 @@ import { Grid3X3, Grid2X2, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 
 import { ProductCard } from '@/components/home';
 import { FadeIn, Button, Select } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
-import { useCategoryStore } from '@/store';
+import { useCategoryStore, useProductStore } from '@/store';
 import { useContentStore } from '@/store/contentStore';
 
 /* ─── Fisher-Yates shuffle (returns a new array) ─── */
@@ -28,74 +27,89 @@ const shuffleArray = <T,>(arr: T[]): T[] => {
 /* ─────────────────────────────────────────────
    NEW ARRIVALS HERO BANNER
 ───────────────────────────────────────────── */
-const NewArrivalsHero: React.FC<{
-  banner?: { title?: string; subtitle?: string; imageUrl?: string; gradient?: string };
-}> = ({ banner }) => (
-  <motion.div
-    initial={{ opacity: 0, y: -16 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-    className="relative mb-10 rounded-3xl overflow-hidden"
-    style={
-      banner?.imageUrl
-        ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-        : { background: banner?.gradient || 'linear-gradient(135deg, #F5E6DC 0%, #EDD5C5 40%, #E8C9B8 100%)' }
-    }
-  >
-    {/* Decorative circles */}
-    <div
-      className="absolute -top-16 -right-16 w-72 h-72 rounded-full opacity-20"
-      style={{ background: 'radial-gradient(circle, #B07D6B 0%, transparent 70%)' }}
-    />
-    <div
-      className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full opacity-15"
-      style={{ background: 'radial-gradient(circle, #C4956A 0%, transparent 70%)' }}
-    />
+export const NewArrivalsHero: React.FC<{
+  banner?: {
+    title?: string;
+    subtitle?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    mediaType?: 'gradient' | 'image' | 'video';
+    gradient?: string;
+  };
+}> = ({ banner }) => {
+  const mediaType = banner?.mediaType ?? (banner?.videoUrl ? 'video' : banner?.imageUrl ? 'image' : 'gradient');
 
-    {/* Top rule */}
-    <div className="absolute top-0 left-0 right-0 h-px opacity-30" style={{ background: '#B07D6B' }} />
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="relative mb-10 rounded-3xl overflow-hidden"
+      style={
+        mediaType === 'image' && banner?.imageUrl
+          ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : mediaType !== 'video'
+            ? { background: banner?.gradient || 'linear-gradient(135deg, #F5E6DC 0%, #EDD5C5 40%, #E8C9B8 100%)' }
+            : undefined
+      }
+    >
+      {mediaType === 'video' && banner?.videoUrl && (
+        <video
+          src={banner.videoUrl}
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          muted
+          loop
+          autoPlay
+          playsInline
+        />
+      )}
+      {/* Decorative circles */}
+      <div
+        className="absolute -top-16 -right-16 w-72 h-72 rounded-full opacity-20"
+        style={{ background: 'radial-gradient(circle, #B07D6B 0%, transparent 70%)' }}
+      />
+      <div
+        className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full opacity-15"
+        style={{ background: 'radial-gradient(circle, #C4956A 0%, transparent 70%)' }}
+      />
 
-    <div className="relative z-10 px-8 md:px-16 py-8 md:py-10 flex flex-col md:flex-row items-center gap-8">
-      {/* Left: text */}
-      <div className="flex-1 text-center md:text-left">
-        <div className="inline-flex items-center gap-2 mb-4">
-          <div className="h-px w-8" style={{ background: '#B07D6B' }} />
-          <span className="text-[10px] font-semibold tracking-[0.35em] uppercase" style={{ color: '#B07D6B' }}>
-            Just Arrived
-          </span>
-          <div className="h-px w-8" style={{ background: '#B07D6B' }} />
+      {/* Top rule */}
+      <div className="absolute top-0 left-0 right-0 h-px opacity-30" style={{ background: '#B07D6B' }} />
+
+      <div className="relative z-10 px-8 md:px-16 py-8 md:py-10 flex flex-col md:flex-row items-center gap-8">
+        {/* Left: text */}
+        <div className="flex-1 text-center md:text-left">
+
+          <h1
+            className="font-serif text-4xl md:text-5xl lg:text-6xl font-light mb-4 leading-tight"
+            style={{ color: '#2C2C2C' }}
+          >
+            {banner?.title || 'New Arrivals'}
+          </h1>
+
+          <p className="text-sm md:text-base mb-0 max-w-xs md:max-w-sm" style={{ color: '#8C7269', lineHeight: '1.7' }}>
+            {banner?.subtitle || 'Fresh pieces, curated with love. Be the first to wear what\'s new this season.'}
+          </p>
         </div>
 
-        <h1
-          className="font-serif text-4xl md:text-5xl lg:text-6xl font-light mb-4 leading-tight"
-          style={{ color: '#2C2C2C' }}
-        >
-          {banner?.title || 'New Arrivals'}
-        </h1>
-
-        <p className="text-sm md:text-base mb-0 max-w-xs md:max-w-sm" style={{ color: '#8C7269', lineHeight: '1.7' }}>
-          {banner?.subtitle || 'Fresh pieces, curated with love. Be the first to wear what\'s new this season.'}
-        </p>
+        {/* Right: decorative icon */}
+        <div className="flex-shrink-0 hidden md:flex flex-col items-center gap-3">
+          <motion.div
+            animate={{ rotate: [0, 3, -3, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-24 h-24 rounded-full flex items-center justify-center"
+            style={{ background: 'rgba(176, 125, 107, 0.15)', border: '1px solid rgba(176, 125, 107, 0.3)' }}
+          >
+            <Sparkles size={36} style={{ color: '#B07D6B' }} />
+          </motion.div>
+        </div>
       </div>
 
-      {/* Right: decorative icon */}
-      <div className="flex-shrink-0 hidden md:flex flex-col items-center gap-3">
-        <motion.div
-          animate={{ rotate: [0, 3, -3, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-24 h-24 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(176, 125, 107, 0.15)', border: '1px solid rgba(176, 125, 107, 0.3)' }}
-        >
-          <Sparkles size={36} style={{ color: '#B07D6B' }} />
-        </motion.div>
-        <span className="text-[9px] tracking-[0.3em] uppercase" style={{ color: '#B07D6B' }}>New Season</span>
-      </div>
-    </div>
-
-    {/* Bottom rule */}
-    <div className="absolute bottom-0 left-0 right-0 h-px opacity-30" style={{ background: '#B07D6B' }} />
-  </motion.div>
-);
+      {/* Bottom rule */}
+      <div className="absolute bottom-0 left-0 right-0 h-px opacity-30" style={{ background: '#B07D6B' }} />
+    </motion.div>
+  );
+};
 
 /* ─────────────────────────────────────────────
    NEW ARRIVALS PAGE
@@ -105,10 +119,18 @@ export const NewArrivalsPage: React.FC = () => {
   const { categories } = useCategoryStore();
   const { content } = useContentStore();
 
+  const {
+    products: allProducts,
+    fetchProducts,
+    loading: { list: loading },
+  } = useProductStore();
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
   const [showFilters, setShowFilters] = useState(false);
   const [gridCols, setGridCols] = useState<3 | 4>(4);
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const categoryFilter = searchParams.get('category') || '';
   const sortFilter = searchParams.get('sort') || 'newest';
@@ -117,30 +139,9 @@ export const NewArrivalsPage: React.FC = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([299, 10000]);
   const [inStockOnly, setInStockOnly] = useState(false);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching products:', error);
-    } else {
-      setProducts(shuffleArray(data || []));
-    }
-    setLoading(false);
-  };
-
   const filteredProducts = useMemo(() => {
     // Filter specifically for new arrivals first
-    let filtered = products.filter(
-      product => product.isNewArrival === true || product.is_new_arrival === true
-    );
+    let filtered = allProducts.filter(product => product.isNewArrival === true);
 
     if (searchQuery) {
       filtered = filtered.filter(product =>
@@ -149,12 +150,11 @@ export const NewArrivalsPage: React.FC = () => {
     }
 
     if (categoryFilter) {
-      filtered = filtered.filter(
-        product =>
-          product.category_slug === categoryFilter ||
-          product.category_name === categoryFilter ||
-          product.category === categoryFilter
-      );
+      filtered = filtered.filter(product => product.categorySlug === categoryFilter);
+    }
+
+    if (inStockOnly) {
+      filtered = filtered.filter(product => product.stock > 0);
     }
 
     filtered = filtered.filter(product => {
@@ -171,12 +171,12 @@ export const NewArrivalsPage: React.FC = () => {
         break;
       case 'newest':
       default:
-        // keep standard default order
+        filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
         break;
     }
 
     return filtered;
-  }, [products, searchQuery, categoryFilter, priceRange, sortFilter]);
+  }, [allProducts, searchQuery, categoryFilter, priceRange, inStockOnly, sortFilter]);
 
   const updateSort = (sort: string) => {
     const params = new URLSearchParams(searchParams);
@@ -209,7 +209,7 @@ export const NewArrivalsPage: React.FC = () => {
         items: filteredProducts.slice(0, 20).map((product, index) => ({
           item_id: product.id,
           item_name: product.name,
-          item_category: product.category || product.category_name || '',
+          item_category: product.category || '',
           price: Number(product.price) || 0,
           index: index,
         })),
@@ -222,7 +222,9 @@ export const NewArrivalsPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── Special Hero Banners ── */}
-        <NewArrivalsHero banner={content.newArrivalBanners?.[0]} />
+        {content.newArrivalBanners?.[0]?.active !== false && (
+          <NewArrivalsHero banner={content.newArrivalBanners?.[0]} />
+        )}
 
         {/* ── Piece count under hero banner ── */}
         <FadeIn>
