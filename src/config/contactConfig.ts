@@ -15,13 +15,13 @@ export const CONTACT = {
     bkashNumber: '01623-124760',
 
     /** Support email — shown in footer if set */
-    email: '',
+    email: 'example@mail.com',
 
     /** Physical office address */
     address: 'Office Dhaka, Mohammadpur, Kaderabad Housing, Road No 6',
 
     /** Instagram profile URL — leave '' to hide icon */
-    instagram: 'https://www.instagram.com/auntheticgirlswear',
+    instagram: 'https://www.instagram.com/',
 
     /** Facebook page URL — leave '' to hide icon */
     facebook: 'https://www.facebook.com/Orivelles',

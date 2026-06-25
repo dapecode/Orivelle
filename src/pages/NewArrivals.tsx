@@ -13,7 +13,8 @@ import { ProductCard } from '@/components/home';
 import { FadeIn, Button, Select } from '@/components/ui';
 import { useProductStore } from '@/store';
 import { useContentStore } from '@/store/contentStore';
-
+import { SITE } from '@/config/siteConfig';
+import { BRAND } from '@/config/brandingConfig';
 /* ─── Size options ─── */
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
 
@@ -37,7 +38,7 @@ export const NewArrivalsHero: React.FC<{
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="relative mb-10 rounded-3xl overflow-hidden"
+      className="relative mb-10 rounded-3xl overflow-hidden min-h-[200px] md:min-h-[240px]"
       style={
         mediaType === 'image' && banner?.imageUrl
           ? { backgroundImage: `url(${banner.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -62,21 +63,10 @@ export const NewArrivalsHero: React.FC<{
       <div className="relative z-10 px-8 md:px-16 py-8 md:py-10 flex flex-col md:flex-row items-center gap-8">
         <div className="flex-1 text-center md:text-left">
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-light mb-4 leading-tight" style={{ color: '#2C2C2C' }}>
-            {banner?.title || 'New Arrivals'}
+            {banner?.title}
           </h1>
           <p className="text-sm md:text-base mb-0 max-w-xs md:max-w-sm" style={{ color: '#8C7269', lineHeight: '1.7' }}>
-            {banner?.subtitle || "Fresh pieces, curated with love. Be the first to wear what's new this season."}
-          </p>
-        </div>
-        <div className="flex-shrink-0 hidden md:flex flex-col items-center gap-3">
-          <motion.div
-            animate={{ rotate: [0, 3, -3, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-24 h-24 rounded-full flex items-center justify-center"
-            style={{ background: 'rgba(176, 125, 107, 0.15)', border: '1px solid rgba(176, 125, 107, 0.3)' }}
-          >
-            <Sparkles size={36} style={{ color: '#B07D6B' }} />
-          </motion.div>
+            {banner?.subtitle}          </p>
         </div>
       </div>
 
@@ -275,9 +265,8 @@ export const NewArrivalsPage: React.FC = () => {
           className="w-full accent-rose-gold"
         />
         <div className="flex justify-between text-sm text-[#6B5B55] mt-1.5">
-          <span>$0</span>
-          <span>{priceRange[1] >= maxPrice ? 'No limit' : `$${priceRange[1].toLocaleString()}`}</span>
-        </div>
+          <span>{SITE.currency.symbol}0</span>
+          <span>{priceRange[1] >= maxPrice ? 'No limit' : `${SITE.currency.symbol}${priceRange[1].toLocaleString()}`}</span></div>
       </div>
     </div>
   );

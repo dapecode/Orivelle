@@ -21,6 +21,7 @@ import type { Product } from '@/types';
 import { trackViewContent } from '@/lib/facebookPixel';
 import { SITE } from '@/config/siteConfig';
 import { BRAND } from '@/config/brandingConfig';
+import { UI } from '@/config/brandingConfig';
 
 // ─── Color libraries — dynamically imported to keep initial bundle light ─────
 let _colorLib: {
@@ -249,6 +250,8 @@ export const ProductDetailPage: React.FC = () => {
   const [addedToCart, setAddedToCart] = useState(false);
   const [similarPage, setSimilarPage] = useState(0);
   const [showStickyCart, setShowStickyCart] = useState(false);
+  const [buyNowHovered, setBuyNowHovered] = useState(false);
+  const [sizeWarning, setSizeWarning] = useState(false);
 
   const thumbsRef = useRef<HTMLDivElement>(null);
   // Store touch start X on window — avoids polluting Window type with a custom prop
@@ -376,11 +379,14 @@ export const ProductDetailPage: React.FC = () => {
   // ── Buy Now handler ────────────────────────────────────────────────────────
   const handleBuyNow = useCallback(() => {
     if (!product) return;
-    if (!selectedSize && product.sizes.length > 0) return;
+    if (!selectedSize && product.sizes.length > 0) {
+      setSizeWarning(true);
+      setTimeout(() => setSizeWarning(false), 2000);
+      return;
+    }
     addItem(product, selectedSize, selectedColor, quantity);
     navigate('/checkout');
   }, [product, selectedSize, selectedColor, quantity, addItem, navigate]);
-
   // ── Touch swipe handlers — use ref instead of window property ─────────────
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -1011,33 +1017,80 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
 
                 {/* ── CTA buttons ── */}
-                <div className="flex gap-2 mb-6">
-                  <Button
-                    size="lg"
+                <div className="flex gap-2 mb-4">
+
+                  {/* Buy Now */}
+                  <motion.button
+                    type="button"
                     onClick={handleBuyNow}
                     disabled={product.stock === 0}
+                    onMouseEnter={() => setBuyNowHovered(true)}
+                    onMouseLeave={() => setBuyNowHovered(false)}
+                    whileTap={{ scale: product.stock !== 0 ? 0.97 : 1 }}
                     aria-label={product.stock === 0 ? 'Out of stock' : `Buy ${product.name} now`}
-                    className="flex-[3] h-12 text-base font-semibold rounded-xl border-0"
-                    style={{ background: 'linear-gradient(135deg,#1eff77 0%,#1eff77 100%)', color: '#000000' }}
+                    className="flex-[3] h-12 text-base font-semibold rounded-xl border-0 flex items-center justify-center gap-2 transition-all duration-200 disabled:cursor-not-allowed"
+                    style={{
+                      background: product.stock === 0
+                        ? UI.button.disabled.background
+                        : UI.button.primary.background,
+                      color: product.stock === 0
+                        ? UI.button.disabled.text
+                        : UI.button.primary.text,
+                      transform: buyNowHovered && product.stock !== 0 ? 'translateY(-2px)' : 'translateY(0)',
+                      boxShadow: buyNowHovered && product.stock !== 0
+                        ? `0 6px 20px ${UI.button.primary.background}55`
+                        : 'none',
+                    }}
                   >
                     <ShoppingBag size={17} aria-hidden="true" />
                     {product.stock === 0 ? 'Out of Stock' : 'Buy Now'}
-                  </Button>
+                  </motion.button>
 
-                  <Button
-                    variant="outline"
-                    size="lg"
+                  {/* Add to Bag */}
+                  <motion.button
+                    type="button"
                     onClick={handleAddToCart}
                     disabled={product.stock === 0}
                     aria-label={addedToCart ? 'Added to bag' : `Add ${product.name} to bag`}
                     aria-live="polite"
-                    className={`flex-1 h-12 text-sm rounded-xl focus-visible:ring-2 focus-visible:ring-rose-gold ${addedToCart ? '!border-green-500 !text-green-500' : ''
+                    whileHover={{ scale: product.stock !== 0 ? 1.02 : 1 }}
+                    whileTap={{ scale: product.stock !== 0 ? 0.96 : 1 }}
+                    className={`flex-1 h-12 text-sm rounded-xl font-medium border-2 transition-colors duration-200
+      focus-visible:ring-2 focus-visible:ring-rose-gold
+      ${product.stock === 0
+                        ? 'opacity-50 cursor-not-allowed border-gray-200 text-gray-400'
+                        : addedToCart
+                          ? 'border-green-500 text-green-600 bg-green-50'
+                          : 'border-rose-gold text-rose-gold hover:bg-blush-light/50'
                       }`}
                   >
-                    {addedToCart ? '✓ Added' : 'Add to Bag'}
-                  </Button>
-                </div>
+                    <AnimatePresence mode="wait">
+                      {addedToCart ? (
+                        <motion.span
+                          key="added"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex items-center justify-center gap-1.5"
+                        >
+                          ✓ Added
+                        </motion.span>
+                      ) : (
+                        <motion.span
+                          key="add"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          Add to Bag
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
 
+                </div>
                 {/* Trust badges — static, so rendered as a plain dl for semantics */}
                 <dl className="grid grid-cols-3 gap-3" aria-label="Trust indicators">
                   {([
@@ -1133,10 +1186,8 @@ export const ProductDetailPage: React.FC = () => {
                   }
                   className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold focus-visible:ring-2 focus-visible:ring-rose-gold"
                   style={{
-                    background: product.stock === 0
-                      ? '#ccc'
-                      : 'linear-gradient(135deg,#1eff77 0%,#1eff77 100%)',
-                    color: '#000000',
+                    background: product.stock === 0 ? '#ccc' : BRAND.colors.primary,
+                    color: '#ffffff',
                   }}
                 >
                   <ShoppingBag size={18} aria-hidden="true" />

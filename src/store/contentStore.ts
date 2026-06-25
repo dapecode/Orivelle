@@ -95,6 +95,14 @@ export interface SiteSettings {
   privacyPolicy: string;
 }
 
+export interface NewArrivalsSection {
+  title: string;
+  subtitle: string;
+  buttonUrl: string;
+  emptyMessage: string;
+  backgroundColor: string;
+}
+
 export interface ContentData {
   // Hero
   heroEnabled: boolean;
@@ -103,6 +111,7 @@ export interface ContentData {
   heroButtonText: string;
   heroImageUrl: string;
   heroLayout?: HeroLayout;
+  newArrivalsSection: NewArrivalsSection;
   heroExtraComponents?: HeroExtraComponent[];
 
   // Banners
@@ -186,6 +195,14 @@ export const defaultContent: ContentData = {
   heroButtonText: 'Shop Now',
   heroImageUrl: '',
 
+  newArrivalsSection: {
+    title: 'New Arrivals',
+    subtitle: 'Fresh styles just landed',
+    buttonUrl: '/products',
+    emptyMessage: 'No new arrivals available.',
+    backgroundColor: '#FAF7F3',
+  },
+
   banners: [],
   newArrivalBanners: [],
   saleBanners: [],
@@ -217,6 +234,11 @@ function mergeWithDefaults(loaded: Partial<ContentData>): ContentData {
   return {
     ...defaultContent,
     ...loaded,
+
+    newArrivalsSection: {
+      ...defaultContent.newArrivalsSection,
+      ...(loaded.newArrivalsSection ?? {}),
+    },
 
     announcement: {
       ...defaultContent.announcement,

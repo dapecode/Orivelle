@@ -174,6 +174,84 @@ export const BRAND = {
 };
 
 // ══════════════════════════════════════════════════════════════
+//  UI COMPONENT CONFIG
+//  Fine-grained control over individual UI elements.
+//  Colors here override the theme for specific components.
+// ══════════════════════════════════════════════════════════════
+
+export const UI = {
+
+    // ── Buttons ────────────────────────────────────────────────
+
+    button: {
+        /** Primary CTA — "Buy Now", "Place Order", "Shop Now" */
+        primary: {
+            background: BRAND.colors.primary,
+            text: '#ffffff',
+            hoverBackground: BRAND.colors.primaryDark,
+        },
+
+        /** Secondary / outline — "Add to Bag", "View Details" */
+        secondary: {
+            background: 'transparent',
+            text: BRAND.colors.primary,
+            border: BRAND.colors.primary,
+            hoverBackground: BRAND.colors.blushLight,
+        },
+
+        /** Destructive — "Remove", "Delete", "Cancel Order" */
+        danger: {
+            background: '#DC2626',
+            text: '#ffffff',
+            hoverBackground: '#B91C1C',
+        },
+
+        /** Disabled state — applied on top of any button variant */
+        disabled: {
+            background: '#D1D5DB',
+            text: '#9CA3AF',
+        },
+    },
+
+    // ── Badges ─────────────────────────────────────────────────
+
+    badge: {
+        sale: { background: '#EF4444', text: '#ffffff' },
+        new: { background: BRAND.colors.primary, text: '#ffffff' },
+        trending: { background: BRAND.colors.primaryDark, text: '#ffffff' },
+        featured: { background: BRAND.colors.primaryLight, text: '#ffffff' },
+    },
+
+    // ── Price Display ───────────────────────────────────────────
+
+    price: {
+        /** Current / sale price */
+        current: BRAND.colors.primaryDark,
+        /** Crossed-out compare price */
+        compare: '#9CA3AF',
+        /** Discount % badge */
+        discountBadge: { background: '#EF4444', text: '#ffffff' },
+    },
+
+    // ── Stock Indicators ────────────────────────────────────────
+
+    stock: {
+        inStock: '#16A34A',
+        lowStock: '#D97706',
+        outOfStock: '#DC2626',
+    },
+
+    // ── Forms & Inputs ──────────────────────────────────────────
+
+    input: {
+        borderFocus: BRAND.colors.primary,
+        accentColor: BRAND.colors.primary,   // range sliders, checkboxes, radios
+    },
+
+} as const;
+
+export type UIConfig = typeof UI;
+// ══════════════════════════════════════════════════════════════
 //  ▲▲▲  STOP EDITING HERE  ▲▲▲
 // ══════════════════════════════════════════════════════════════
 

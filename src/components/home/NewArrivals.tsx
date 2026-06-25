@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { FadeIn, SectionHeader, PriceDisplay, Badge } from '@/components/ui';
 import { useProductStore } from '@/store';
+import { useContentStore } from '@/store/contentStore';
 import { useAutoScroll } from './useAutoScroll';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
 
 export const NewArrivals: React.FC = () => {
     const { products, fetchProducts } = useProductStore();
+    const { content } = useContentStore();
     const navigate = useNavigate();
 
     const CARD_WIDTH = 280 + 20;
@@ -23,21 +25,51 @@ export const NewArrivals: React.FC = () => {
 
     useEffect(() => { fetchProducts(); }, []);
 
+    /* ── Pull config from content store ── */
+    const section = content.newArrivalsSection;
+    const title = section?.title || '';
+    const subtitle = section?.subtitle || '';
+    const buttonUrl = section?.buttonUrl || '';
+    const emptyMsg = section?.emptyMessage || '';
+    const bgColor = section?.backgroundColor || '#FAF7F3';
+
+    /* ── If admin set a buttonUrl the entire header becomes a link ── */
+    const handleHeaderClick = () => {
+        if (!buttonUrl) return;
+        if (buttonUrl.startsWith('http')) {
+            window.open(buttonUrl, '_blank', 'noopener noreferrer');
+        } else {
+            navigate(buttonUrl);
+        }
+    };
+
     return (
-        <section className="py-8 md:py-12 overflow-hidden" style={{ backgroundColor: '#FAF7F3' }}>
+        <section className="py-8 md:py-12 overflow-hidden" style={{ backgroundColor: bgColor }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <FadeIn>
-                    <SectionHeader
-                        title="New Arrivals"
-                        subtitle="Fresh styles just landed — be the first to discover them"
-                    />
+                    {/* Whole header block is clickable when admin sets a URL */}
+                    <div
+                        onClick={handleHeaderClick}
+                        className={buttonUrl ? 'cursor-pointer' : undefined}
+                        role={buttonUrl ? 'link' : undefined}
+                        aria-label={buttonUrl ? `${title} — view all` : undefined}
+                        tabIndex={buttonUrl ? 0 : undefined}
+                        onKeyDown={buttonUrl
+                            ? (e) => { if (e.key === 'Enter') handleHeaderClick(); }
+                            : undefined
+                        }
+                    >
+                        <SectionHeader title={title} subtitle={subtitle} />
+                    </div>
                 </FadeIn>
             </div>
 
             {newItems.length === 0 ? (
-                <div className="text-center py-16 text-[#6B5B55]">
-                    <p>No new arrivals yet. Mark products as "New Arrival" in the admin panel.</p>
-                </div>
+                emptyMsg ? (
+                    <div className="text-center py-16 text-[#6B5B55]">
+                        <p>{emptyMsg}</p>
+                    </div>
+                ) : null
             ) : (
                 <div className="relative mt-10">
                     <div
