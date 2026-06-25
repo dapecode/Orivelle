@@ -117,7 +117,7 @@ export const THEMES: Record<ThemeName, BrandColors> = {
      * Then set activeTheme: 'Custom' below to use it.
      */
     'Custom': {
-        primary: '#C9A86A',      // Champagne Gold
+        primary: '#d3aa5fff',      // Champagne Gold
         primaryLight: '#E0C595',
         primaryDark: '#A8864A',
 
@@ -136,7 +136,7 @@ export const THEMES: Record<ThemeName, BrandColors> = {
 //  ▼▼▼  EDIT THIS SECTION TO REBRAND / RETHEME YOUR STORE  ▼▼▼
 // ══════════════════════════════════════════════════════════════
 
-const ACTIVE_THEME: ThemeName = 'Rose Gold';   // ← change theme here
+const ACTIVE_THEME: ThemeName = 'Custom';   // ← change theme here
 
 export const BRAND = {
     // ── Brand Identity ────────────────────────────────────────
