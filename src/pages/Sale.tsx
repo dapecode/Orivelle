@@ -371,7 +371,7 @@ export const SalePage: React.FC = () => {
                                         </h3>
                                         <input
                                             type="range"
-                                            min={299}
+                                            min={0}
                                             max={10000}
                                             step={1}
                                             value={priceRange[1]}
@@ -479,7 +479,7 @@ export const SalePage: React.FC = () => {
                                         <div className="space-y-2">
                                             <input
                                                 type="range"
-                                                min={299}
+                                                min={0}
                                                 max={10000}
                                                 step={1}
                                                 value={priceRange[1]}
