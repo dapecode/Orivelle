@@ -117,15 +117,18 @@ export const THEMES: Record<ThemeName, BrandColors> = {
      * Then set activeTheme: 'Custom' below to use it.
      */
     'Custom': {
-        primary: '#B76E79',
-        primaryLight: '#D4949E',
-        primaryDark: '#8B4557',
-        blush: '#F4C2C2',
-        blushLight: '#FADBD8',
-        blushDark: '#E8A0A0',
-        softBg: '#FDF8F4',
-        charcoal: '#2D2D2D',
-        warmGray: '#6B5B5B',
+        primary: '#C9A86A',      // Champagne Gold
+        primaryLight: '#E0C595',
+        primaryDark: '#A8864A',
+
+        blush: '#F5F1EA',
+        blushLight: '#FAF8F4',
+        blushDark: '#E8DDCD',
+
+        softBg: '#FFFFFF',
+
+        charcoal: '#121212',     // Rich Black
+        warmGray: '#6F6F6F',
     },
 };
 
@@ -138,13 +141,13 @@ const ACTIVE_THEME: ThemeName = 'Rose Gold';   // ← change theme here
 export const BRAND = {
     // ── Brand Identity ────────────────────────────────────────
     /** Line 1 of the stacked logo (navbar, admin sidebar, login) */
-    nameTop: 'Demo',
+    nameTop: 'orivelle',
     /** Line 2 of the stacked logo */
-    nameBottom: 'Site',
+    nameBottom: '',
     /** Full single-line name used in copyright, SEO, watermarks */
     fullName: 'Orivelle',
     /** Short abbreviation — used in localStorage keys */
-    shortName: 'DS',
+    shortName: 'orivelle',
 
     // ── On-page Content ───────────────────────────────────────
     description:
