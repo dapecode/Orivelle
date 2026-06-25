@@ -67,7 +67,7 @@ const organizationSchema = {
     '@type': 'Country',
     name: 'Bangladesh',
   },
-  priceRange: '৳৳',
+  priceRange: '$$',
   sameAs: [CONTACT.facebook, CONTACT.instagram].filter(Boolean),
   contactPoint: {
     '@type': 'ContactPoint',
@@ -134,7 +134,7 @@ const localBusinessSchema = {
   description: BRAND.description,
   url: DOMAIN,
   telephone: CONTACT.phone,
-  priceRange: '৳৳',
+  priceRange: '$$',
   currenciesAccepted: 'BDT',
   paymentAccepted: 'Cash, bKash, Nagad',
   areaServed: { '@type': 'Country', name: 'Bangladesh' },
@@ -283,7 +283,7 @@ const RecentlyViewedProducts = memo(() => {
                   <Link
                     to={`/product/${product.slug}`}
                     className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-gold focus-visible:rounded-2xl"
-                    aria-label={`View ${product.name}${product.comparePrice && product.comparePrice > product.price ? ` — On sale from ৳${product.price}` : ` — ৳${product.price}`}`}
+                    aria-label={`View ${product.name}${product.comparePrice && product.comparePrice > product.price ? ` — On sale from $${product.price}` : ` — $${product.price}`}`}
                   >
                     {/* Photo card — explicit aspect-ratio eliminates CLS */}
                     <div

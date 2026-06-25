@@ -205,8 +205,8 @@ export const ShopPage: React.FC = () => {
               type="button"
               onClick={() => toggleSize(size)}
               className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${selectedSizes.includes(size)
-                  ? 'bg-rose-gold text-white border-rose-gold font-medium'
-                  : 'border-blush/40 text-[#6B5B55] hover:border-rose-gold'
+                ? 'bg-rose-gold text-white border-rose-gold font-medium'
+                : 'border-blush/40 text-[#6B5B55] hover:border-rose-gold'
                 }`}
             >
               {size}
@@ -230,8 +230,8 @@ export const ShopPage: React.FC = () => {
           className="w-full accent-rose-gold"
         />
         <div className="flex justify-between text-sm text-[#6B5B55] mt-1.5">
-          <span>৳0</span>
-          <span>{priceRange[1] >= maxPrice ? 'No limit' : `৳${priceRange[1].toLocaleString()}`}</span>
+          <span>$0</span>
+          <span>{priceRange[1] >= maxPrice ? 'No limit' : `$${priceRange[1].toLocaleString()}`}</span>
         </div>
       </div>
     </div>
@@ -402,8 +402,8 @@ export const ShopPage: React.FC = () => {
               <motion.div
                 layout
                 className={`grid gap-4 md:gap-6 ${gridCols === 3
-                    ? 'grid-cols-2 md:grid-cols-3'
-                    : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                  ? 'grid-cols-2 md:grid-cols-3'
+                  : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
                   }`}
               >
                 {filteredProducts.map((product, index) => (

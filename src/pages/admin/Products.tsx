@@ -1416,9 +1416,9 @@ export const AdminProducts: React.FC = () => {
                   </td>
                   <td className="py-3 px-4 text-[#6B5B55]">{product.category}</td>
                   <td className="py-3 px-4">
-                    <span className="font-medium text-charcoal">৳{product.price.toFixed(0)}</span>
+                    <span className="font-medium text-charcoal">${product.price.toFixed(0)}</span>
                     {product.comparePrice && (
-                      <span className="text-xs text-[#6B5B55] line-through ml-1">৳{product.comparePrice.toFixed(0)}</span>
+                      <span className="text-xs text-[#6B5B55] line-through ml-1">${product.comparePrice.toFixed(0)}</span>
                     )}
                   </td>
                   <td className="py-3 px-4">
@@ -1495,13 +1495,13 @@ export const AdminProducts: React.FC = () => {
               </div>
             </div>
             <Input
-              label="Price (৳)"
+              label="Price ($)"
               type="number"
               value={form.price?.toString() || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
             />
             <Input
-              label="Compare Price (৳) — strike-through"
+              label="Compare Price ($) — strike-through"
               type="number"
               value={form.comparePrice?.toString() || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, comparePrice: parseFloat(e.target.value) || undefined })}

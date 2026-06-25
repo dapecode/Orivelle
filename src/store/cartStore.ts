@@ -151,7 +151,7 @@ export const useCartStore = create<CartStore>()(
         if (subtotal < coupon.minOrderAmount) {
           set({
             // ✅ BDT symbol instead of hardcoded $
-            couponError: `Minimum order amount is ৳${coupon.minOrderAmount}`,
+            couponError: `Minimum order amount is $${coupon.minOrderAmount}`,
             coupon: null,
             couponCode: '',
           });

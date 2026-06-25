@@ -253,7 +253,7 @@ export const CartPage: React.FC = () => {
                 <div className="mb-4 p-3 bg-blush-light/40 rounded-xl text-xs text-[#6B5B55]">
                   Add{' '}
                   <span className="font-semibold text-rose-gold">
-                    ৳{(FREE_SHIPPING_THRESHOLD - (subtotal - discount)).toFixed(0)}
+                    ${(FREE_SHIPPING_THRESHOLD - (subtotal - discount)).toFixed(0)}
                   </span>{' '}
                   more for free shipping!
                 </div>
@@ -311,13 +311,13 @@ export const CartPage: React.FC = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-[#6B5B55]">Subtotal</span>
-                  <span className="font-medium">৳{subtotal.toFixed(0)}</span>
+                  <span className="font-medium">${subtotal.toFixed(0)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-green-600">Discount</span>
                     <span className="text-green-600 font-medium">
-                      −৳{discount.toFixed(0)}
+                      −${discount.toFixed(0)}
                     </span>
                   </div>
                 )}
@@ -327,7 +327,7 @@ export const CartPage: React.FC = () => {
                     {shippingFree ? (
                       <span className="text-green-600">Free 🎉</span>
                     ) : (
-                      `৳${SHIPPING_CHARGE}`
+                      `$${SHIPPING_CHARGE}`
                     )}
                   </span>
                 </div>
@@ -338,7 +338,7 @@ export const CartPage: React.FC = () => {
               <div className="flex justify-between mb-6">
                 <span className="font-semibold text-charcoal">Total</span>
                 <span className="heading-serif text-2xl font-bold text-charcoal">
-                  ৳{orderTotal.toFixed(0)}
+                  ${orderTotal.toFixed(0)}
                 </span>
               </div>
 

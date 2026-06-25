@@ -403,8 +403,8 @@ export const ProductDetailPage: React.FC = () => {
 
     const stockInfo = getStockInfo(product.stock);
     const priceStr = product.comparePrice
-      ? `Special price: ৳${product.price} (was ৳${product.comparePrice})`
-      : `Price: ৳${product.price}`;
+      ? `Special price: $${product.price} (was $${product.comparePrice})`
+      : `Price: $${product.price}`;
     const reviewStr = product.reviewCount > 0
       ? ` Rated ${product.rating.toFixed(1)}/5 by ${product.reviewCount} customers.`
       : '';
@@ -1118,8 +1118,8 @@ export const ProductDetailPage: React.FC = () => {
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <div className="text-sm text-gray-600">Price</div>
-                  {/* ৳ character spelled out directly — avoids Unicode encoding issues */}
-                  <div className="text-xl font-bold text-pink-600">৳{product.price}</div>
+                  {/* $ character spelled out directly — avoids Unicode encoding issues */}
+                  <div className="text-xl font-bold text-pink-600">${product.price}</div>
                 </div>
                 <Button
                   type="button"

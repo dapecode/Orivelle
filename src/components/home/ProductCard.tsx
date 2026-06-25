@@ -56,7 +56,7 @@ export const ProductCard: React.FC<ProductCardProps> = React.memo(
         return (
             <Link
                 to={productUrl}
-                aria-label={`${product.name}${discountPct > 0 ? `, ${discountPct}% off` : ''}, ৳${product.price}`}
+                aria-label={`${product.name}${discountPct > 0 ? `, ${discountPct}% off` : ''}, $${product.price}`}
                 className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-gold focus-visible:ring-offset-2 rounded-[20px] group"
                 onClick={(e) => {
                     const target = e.target as HTMLElement;

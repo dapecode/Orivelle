@@ -73,7 +73,7 @@ function formatDateTime(iso: string) {
 }
 
 function formatCurrency(n: number) {
-    return `৳${n.toFixed(2)}`;
+    return `$${n.toFixed(2)}`;
 }
 
 function statusLabel(s: string) {

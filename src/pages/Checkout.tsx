@@ -348,7 +348,7 @@ const CheckoutForm: React.FC = () => {
       return;
     }
     if (subtotal < coupon.minOrderAmount) {
-      setCouponError(`Minimum order amount is ৳${coupon.minOrderAmount}`);
+      setCouponError(`Minimum order amount is $${coupon.minOrderAmount}`);
       return;
     }
 
@@ -709,7 +709,7 @@ const CheckoutForm: React.FC = () => {
                     <p className="text-xs text-[#6B5B55]">{item.selectedSize} • {item.selectedColor} × {item.quantity}</p>
                   </div>
                   <p className="text-sm font-bold flex-shrink-0" style={{ color: '#B07D6B' }}>
-                    ৳{(item.product.price * item.quantity).toFixed(0)}
+                    ${(item.product.price * item.quantity).toFixed(0)}
                   </p>
                 </div>
               ))}
@@ -839,7 +839,7 @@ const CheckoutForm: React.FC = () => {
                       <Icon size={20} style={{ color: '#B07D6B' }} />
                       <p className="font-semibold text-sm mt-1" style={{ color: '#2C2C2C' }}>{zone.label}</p>
                       <p className="text-[11px]" style={{ color: '#9A8880' }}>{zone.sub}</p>
-                      <p className="text-sm font-bold mt-1" style={{ color: '#B07D6B' }}>৳{zone.charge}</p>
+                      <p className="text-sm font-bold mt-1" style={{ color: '#B07D6B' }}>${zone.charge}</p>
                     </motion.button>
                   );
                 })}
@@ -892,7 +892,7 @@ const CheckoutForm: React.FC = () => {
                         style={{ background: 'rgba(176,125,107,0.04)', borderTop: '1px solid rgba(176,125,107,0.15)' }}>
                         <p className="text-sm text-[#6C5A54] flex items-center gap-2">
                           <CheckCircle size={15} className="text-green-500 flex-shrink-0" />
-                          Pay ৳{total.toFixed(0)} on delivery. No advance payment needed.
+                          Pay ${total.toFixed(0)} on delivery. No advance payment needed.
                         </p>
                       </div>
                     </motion.div>
@@ -1017,7 +1017,7 @@ const CheckoutForm: React.FC = () => {
               </button>
             </div>
             {couponError && <p className="text-xs mt-1" style={{ color: '#C0504D' }}>{couponError}</p>}
-            {couponApplied && <p className="text-xs mt-1" style={{ color: '#4A8C5C' }}>✓ You saved ৳{couponDiscount}!</p>}
+            {couponApplied && <p className="text-xs mt-1" style={{ color: '#4A8C5C' }}>✓ You saved ${couponDiscount}!</p>}
           </div>
 
           <div className="h-px" style={{ background: 'rgba(176,125,107,0.15)' }} />
@@ -1026,28 +1026,28 @@ const CheckoutForm: React.FC = () => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-warm-gray">Subtotal</span>
-              <span className="font-medium">৳{subtotal.toFixed(0)}</span>
+              <span className="font-medium">${subtotal.toFixed(0)}</span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between" style={{ color: '#4A8C5C' }}>
-                <span>Discount</span><span>−৳{discount.toFixed(0)}</span>
+                <span>Discount</span><span>−${discount.toFixed(0)}</span>
               </div>
             )}
             {couponApplied && couponDiscount > 0 && (
               <div className="flex justify-between" style={{ color: '#4A8C5C' }}>
-                <span>Coupon Discount</span><span>−৳{couponDiscount.toFixed(0)}</span>
+                <span>Coupon Discount</span><span>−${couponDiscount.toFixed(0)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span className="text-warm-gray">Delivery Charge</span>
               <span className="font-medium" style={{ color: '#B07D6B' }}>
-                {deliveryZone ? `৳${shippingCharge}` : 'Select an option'}
+                {deliveryZone ? `$${shippingCharge}` : 'Select an option'}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2"
               style={{ borderTop: '1px solid rgba(176,125,107,0.15)' }}>
               <span className="font-bold text-charcoal text-base">Total</span>
-              <span className="heading-serif text-2xl font-bold" style={{ color: '#B07D6B' }}>৳{total.toFixed(0)}</span>
+              <span className="heading-serif text-2xl font-bold" style={{ color: '#B07D6B' }}>${total.toFixed(0)}</span>
             </div>
           </div>
 
@@ -1126,7 +1126,7 @@ const CheckoutForm: React.FC = () => {
                   </p>
                   <p className="text-sm text-warm-gray">{COUNTRIES.find(c => c.iso2 === form.country)?.name}</p>
                   <p className="text-xs mt-1 font-medium" style={{ color: '#B07D6B' }}>
-                    {DELIVERY_ZONES.find(z => z.id === deliveryZone)?.label} — ৳{shippingCharge}
+                    {DELIVERY_ZONES.find(z => z.id === deliveryZone)?.label} — ${shippingCharge}
                   </p>
                 </div>
 
@@ -1162,7 +1162,7 @@ const CheckoutForm: React.FC = () => {
                           <p className="text-xs text-[#6B5B55]">{item.selectedSize} • x{item.quantity}</p>
                         </div>
                         <p className="text-sm font-bold flex-shrink-0" style={{ color: '#B07D6B' }}>
-                          ৳{(item.product.price * item.quantity).toFixed(0)}
+                          ${(item.product.price * item.quantity).toFixed(0)}
                         </p>
                       </div>
                     ))}
@@ -1172,7 +1172,7 @@ const CheckoutForm: React.FC = () => {
                 {/* Total */}
                 <div className="flex justify-between items-center px-1">
                   <span className="font-bold text-charcoal">Total Amount</span>
-                  <span className="heading-serif text-xl font-bold" style={{ color: '#B07D6B' }}>৳{total.toFixed(0)}</span>
+                  <span className="heading-serif text-xl font-bold" style={{ color: '#B07D6B' }}>${total.toFixed(0)}</span>
                 </div>
 
                 {/* Action Buttons */}
@@ -1188,7 +1188,7 @@ const CheckoutForm: React.FC = () => {
                     whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                     className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white"
                     style={{ background: placing ? 'rgba(176,125,107,0.5)' : 'linear-gradient(135deg, #B07D6B, #C4956A)', border: 'none', cursor: placing ? 'not-allowed' : 'pointer' }}>
-                    {placing ? 'Processing...' : `Place Order — ৳${total.toFixed(0)}`}
+                    {placing ? 'Processing...' : `Place Order — $${total.toFixed(0)}`}
                   </motion.button>
                 </div>
               </div>

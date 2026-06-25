@@ -295,11 +295,11 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({ price, comparePrice,
   return (
     <div className="flex items-center gap-2">
       <span className={`${sizes[size]} font-semibold text-charcoal`}>
-        ৳{price.toFixed(2)}
+        ${price.toFixed(2)}
       </span>
       {comparePrice && comparePrice > price && (
         <span className={`${saleSizes[size]} text-[#6B5B55] line-through`}>
-          ৳{comparePrice.toFixed(2)}
+          ${comparePrice.toFixed(2)}
         </span>
       )}
       {comparePrice && comparePrice > price && (

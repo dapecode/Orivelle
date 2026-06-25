@@ -170,7 +170,7 @@ export const defaultSiteSettings: SiteSettings = {
   address: '',
 
   currency: 'BDT',
-  currencySymbol: '৳',
+  currencySymbol: '$',
   paymentMethods: [...SITE.paymentMethods],
   paymentNumber: '',
 
@@ -192,7 +192,7 @@ export const defaultContent: ContentData = {
 
   announcement: {
     enabled: true,
-    messages: ['Free shipping on orders over ৳500!'],
+    messages: ['Free shipping on orders over $500!'],
     animation: 'marquee',
     bgColor: '#000000',
     textColor: '#ffffff',

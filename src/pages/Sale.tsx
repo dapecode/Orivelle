@@ -276,8 +276,8 @@ export const SalePage: React.FC = () => {
                     className="w-full accent-rose-gold"
                 />
                 <div className="flex justify-between text-sm text-[#6B5B55] mt-1.5">
-                    <span>৳0</span>
-                    <span>{priceRange[1] >= maxPrice ? 'No limit' : `৳${priceRange[1].toLocaleString()}`}</span>
+                    <span>$0</span>
+                    <span>{priceRange[1] >= maxPrice ? 'No limit' : `$${priceRange[1].toLocaleString()}`}</span>
                 </div>
             </div>
         </div>
