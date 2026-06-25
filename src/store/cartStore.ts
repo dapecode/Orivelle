@@ -75,7 +75,7 @@ export const useCartStore = create<CartStore>()(
         window.dataLayer.push({
           event: 'add_to_cart',
           ecommerce: {
-            currency: 'BDT',
+            currency: SITE.currency.code,
             value: product.price * quantity,
             items: [{
               item_id: product.id,

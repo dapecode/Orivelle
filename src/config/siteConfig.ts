@@ -72,6 +72,11 @@ export const SITE = {
     ] as string[],
 
     ogImage: '/images/og-image.jpg',
+    // ─── Currency ───────────────────────────────────────────────
+    currency: {
+        symbol: '$',   // ← change to '$' to switch to dollar
+        code: 'USD',   // ← change to 'USD' to switch to dollar
+    },
 } as const;
 
 export type SiteConfig = typeof SITE;

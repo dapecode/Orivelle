@@ -432,7 +432,7 @@ const CheckoutForm: React.FC = () => {
       window.dataLayer.push({
         event: 'begin_checkout',
         ecommerce: {
-          currency: 'BDT',
+          currency: SITE.currency.code,
           value: total,
           items: checkoutItems.map(item => ({
             item_id: item.product.id,
@@ -591,7 +591,7 @@ const CheckoutForm: React.FC = () => {
       event: 'purchase',
       ecommerce: {
         transaction_id: num,
-        currency: 'BDT',
+        currency: SITE.currency.code,
         value: total,
         shipping: shippingCharge,
         coupon: couponApplied ? couponInput.trim().toUpperCase() : undefined,

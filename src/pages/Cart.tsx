@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag } from 'lucide-react';
 import { Button, EmptyState, PriceDisplay } from '@/components/ui';
 import { useCartStore } from '@/store';
+import { SITE } from '@/config/siteConfig';
 
 export const CartPage: React.FC = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export const CartPage: React.FC = () => {
     window.dataLayer.push({
       event: 'view_cart',
       ecommerce: {
-        currency: 'BDT',
+        currency: SITE.currency.code,
         value: getTotal(),
         items: items.map((item) => ({
           item_id: item.product.id,
@@ -62,7 +63,7 @@ export const CartPage: React.FC = () => {
       window.dataLayer.push({
         event: 'remove_from_cart',
         ecommerce: {
-          currency: 'BDT',
+          currency: SITE.currency.code,
           items: [
             {
               item_id: item.product.id,

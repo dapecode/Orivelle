@@ -53,6 +53,7 @@ const ensureColorLib = () => {
   return _colorLibPromise;
 };
 
+
 // Common color names → hex. Defined at module scope: allocated once, shared across all renders.
 const _SIMPLE: Record<string, string> = {
   'white': '#FFFFFF', 'off white': '#FAF9F6', 'cream': '#FFFDD0',
@@ -296,7 +297,7 @@ export const ProductDetailPage: React.FC = () => {
         window.dataLayer.push({
           event: 'view_item',
           ecommerce: {
-            currency: 'BDT',
+            currency: SITE.currency.code,
             value: normalised.price,
             items: [{
               item_id: normalised.id,
@@ -357,7 +358,7 @@ export const ProductDetailPage: React.FC = () => {
     window.dataLayer.push({
       event: 'add_to_cart',
       ecommerce: {
-        currency: 'BDT',
+        currency: SITE.currency.code,
         value: product.price * quantity,
         items: [{
           item_id: product.id,
@@ -403,8 +404,8 @@ export const ProductDetailPage: React.FC = () => {
 
     const stockInfo = getStockInfo(product.stock);
     const priceStr = product.comparePrice
-      ? `Special price: $${product.price} (was $${product.comparePrice})`
-      : `Price: $${product.price}`;
+      ? `Special price: ${SITE.currency.symbol}${product.price} (was ${SITE.currency.symbol}${product.comparePrice})`
+      : `Price: ${SITE.currency.symbol}${product.price}`;
     const reviewStr = product.reviewCount > 0
       ? ` Rated ${product.rating.toFixed(1)}/5 by ${product.reviewCount} customers.`
       : '';
@@ -451,14 +452,14 @@ export const ProductDetailPage: React.FC = () => {
         '@type': 'Offer',
         '@id': `${canonical}#offer`,
         url: canonical,
-        priceCurrency: 'BDT',
+        pricecurrency: SITE.currency.code,
         price: product.price,
         priceValidUntil,
         availability,
         itemCondition: 'https://schema.org/NewCondition',
         seller: { '@type': 'Organization', name: BRAND.fullName, url: ORIGIN },
         ...(product.comparePrice && product.comparePrice > product.price
-          ? { priceSpecification: { '@type': 'PriceSpecification', price: product.price, priceCurrency: 'BDT', valueAddedTaxIncluded: true } }
+          ? { priceSpecification: { '@type': 'PriceSpecification', price: product.price, pricecurrency: SITE.currency.code, valueAddedTaxIncluded: true } }
           : {}),
       },
       ...(product.reviewCount > 0 ? {
@@ -560,7 +561,7 @@ export const ProductDetailPage: React.FC = () => {
           <meta property="og:locale" content="en_US" />
           {/* Facebook Commerce / Catalog product meta */}
           <meta property="product:price:amount" content={String(product.price)} />
-          <meta property="product:price:currency" content="BDT" />
+          <meta property="product:price:currency" content={SITE.currency.code} />
           <meta property="product:availability" content={product.stock > 0 ? 'in stock' : 'out of stock'} />
           <meta property="product:condition" content="new" />
           {product.sku && <meta property="product:retailer_item_id" content={product.sku} />}
@@ -1119,7 +1120,9 @@ export const ProductDetailPage: React.FC = () => {
                 <div className="flex-1">
                   <div className="text-sm text-gray-600">Price</div>
                   {/* $ character spelled out directly — avoids Unicode encoding issues */}
-                  <div className="text-xl font-bold text-pink-600">${product.price}</div>
+                  <div className="text-xl font-bold text-pink-600">
+                    {SITE.currency.symbol}{product.price}
+                  </div>
                 </div>
                 <Button
                   type="button"

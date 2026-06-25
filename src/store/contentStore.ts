@@ -169,7 +169,7 @@ export const defaultSiteSettings: SiteSettings = {
   phone: '',
   address: '',
 
-  currency: 'BDT',
+  currency: SITE.currency.code,
   currencySymbol: '$',
   paymentMethods: [...SITE.paymentMethods],
   paymentNumber: '',

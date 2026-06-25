@@ -3,7 +3,7 @@
  * IDs are read here so event helpers (facebookPixel.ts, gtm.ts)
  * can conditionally fire only when an ID is actually configured.
  */
-
+import { SITE } from '@/config/siteConfig';
 export const trackingConfig = {
     /**
      * Facebook Pixel ID — hardcoded to match index.html init snippet.
@@ -26,7 +26,7 @@ export const trackingConfig = {
     /**
      * ISO 4217 currency code used across all tracking events.
      */
-    currency: 'BDT',
+    currency: SITE.currency.code,
 } as const;
 
 export const isTrackingEnabled = () =>
