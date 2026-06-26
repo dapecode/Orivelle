@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS coupons (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   code TEXT UNIQUE NOT NULL,
   discount DECIMAL(10,2) NOT NULL,
-  discount_type TEXT DEFAULT 'percentage' CHECK (discount_type IN ('percentage', 'fixed')),
+  type TEXT DEFAULT 'percentage' CHECK (type IN ('percentage', 'fixed')),
   min_order_amount DECIMAL(10,2) DEFAULT 0,
   max_uses INTEGER DEFAULT 100,
   used_count INTEGER DEFAULT 0,
