@@ -22,6 +22,7 @@ import { trackInitiateCheckout, trackPurchase } from '@/lib/facebookPixel';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { SITE } from '@/config/siteConfig';
+import { BRAND } from '@/config/brandingConfig';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -453,7 +454,7 @@ const CheckoutForm: React.FC = () => {
   // Place order
   const handlePlaceOrder = async () => {
     setPlacing(true);
-    const num = `AG-${Date.now().toString().slice(-6)}`;
+    const num = `${BRAND.orderPrefix}-${Date.now().toString().slice(-6)}`;
     const [firstName, ...rest] = form.fullName.trim().split(' ');
     const lastName = rest.join(' ');
 

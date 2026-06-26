@@ -17,6 +17,7 @@
 // ===================================================
 
 import Stripe from 'stripe';
+import { checkRateLimit, getClientIp } from './_lib/rateLimit.js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -43,10 +44,26 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'A valid positive amount is required.' });
         }
 
+        // Re-validate against the real order row — never trust the client's amount alone
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        const { data: orderRow, error: orderErr } = await supabase
+            .from('orders')
+            .select('total, payment_status')
+            .eq('order_number', orderNumber)
+            .single();
+
+        if (orderErr || !orderRow) {
+            return res.status(404).json({ error: 'Order not found.' });
+        }
+        if (orderRow.payment_status === 'verified') {
+            return res.status(409).json({ error: 'This order has already been paid.' });
+        }
+        if (Math.round(orderRow.total * 100) !== Math.round(amount * 100)) {
+            return res.status(400).json({ error: 'Amount does not match order total.' });
+        }
+
         // Stripe wants amounts in the smallest currency unit (e.g. cents for USD).
-        // As with create-stripe-session.js, re-validate this against your own
-        // order record server-side before going live — never trust a client-sent
-        // price as the final word on what gets charged.
         const unitAmount = Math.round(amount * 100);
 
         const paymentIntent = await stripe.paymentIntents.create({
@@ -66,4 +83,9 @@ export default async function handler(req, res) {
         console.error('[create-payment-intent]', err);
         return res.status(500).json({ error: 'Failed to create payment intent.' });
     }
+}
+const ip = getClientIp(req);
+const allowed = await checkRateLimit(`create-payment-intent:${ip}`, 5, 60); // 5 req/min per IP
+if (!allowed) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
 }

@@ -1,5 +1,5 @@
 /* ===================================================
-   Orivelle - Admin Orders Management
+    Admin Orders Management
    FIXED:
    1. fetchOrders() called on mount so search works
    2. Admin can edit order total inline

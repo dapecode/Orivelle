@@ -12,6 +12,7 @@
 //   SSLCOMMERZ_IS_SANDBOX        'true' while testing, 'false' when live
 //   PUBLIC_SITE_URL              e.g. https://orivelle.vercel.app//
 // ===================================================
+import { checkRateLimit, getClientIp } from './_lib/rateLimit.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -22,9 +23,16 @@ export default async function handler(req, res) {
   const {
     SSLCOMMERZ_STORE_ID,
     SSLCOMMERZ_STORE_PASSWORD,
+
     SSLCOMMERZ_IS_SANDBOX,
     PUBLIC_SITE_URL,
   } = process.env;
+
+  const ip = getClientIp(req);
+  const allowed = await checkRateLimit(`sslcommerz-init:${ip}`, 5, 60);
+  if (!allowed) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
+  }
 
   if (!SSLCOMMERZ_STORE_ID || !SSLCOMMERZ_STORE_PASSWORD) {
     return res.status(500).json({ error: 'SSLCommerz is not configured on the server.' });
@@ -38,6 +46,24 @@ export default async function handler(req, res) {
     }
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       return res.status(400).json({ error: 'A valid positive amount is required.' });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { data: orderRow, error: orderErr } = await supabase
+      .from('orders')
+      .select('total, payment_status')
+      .eq('order_number', orderNumber)
+      .single();
+
+    if (orderErr || !orderRow) {
+      return res.status(404).json({ error: 'Order not found.' });
+    }
+    if (orderRow.payment_status === 'verified') {
+      return res.status(409).json({ error: 'This order has already been paid.' });
+    }
+    if (Math.round(orderRow.total * 100) !== Math.round(amount * 100)) {
+      return res.status(400).json({ error: 'Amount does not match order total.' });
     }
 
     const siteUrl = (PUBLIC_SITE_URL || `https://${req.headers.host}`).replace(/\/$/, '');

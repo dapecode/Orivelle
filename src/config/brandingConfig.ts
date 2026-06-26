@@ -148,7 +148,8 @@ export const BRAND = {
     fullName: 'Orivelle',
     /** Short abbreviation — used in localStorage keys */
     shortName: 'orivelle',
-
+    /** Prefix used for generated order numbers, e.g. "ORV-482910" */
+    orderPrefix: 'ORV',
     // ── On-page Content ───────────────────────────────────────
     description:
         'Luxury feminine fashion crafted for the modern woman. Every piece tells a story of elegance, confidence, and timeless beauty.',

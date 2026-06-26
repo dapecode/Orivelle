@@ -48,13 +48,16 @@ export default async function handler(req, res) {
   const tranId = body.tran_id || req.query.tran_id;
   const valId = body.val_id;
 
-  // Cancel/fail from the browser redirect — no need to validate, nothing to confirm.
+  // Cancel/fail from the browser redirect — not cryptographically verified by SSLCommerz,
+  // so we only allow it to move a still-pending order to failed (can't be used to
+  // overwrite an order that's already verified or already failed).
   if (statusParam === 'cancel' || statusParam === 'fail') {
     if (tranId) {
       await supabase
         .from('orders')
         .update({ payment_status: 'failed', updated_at: new Date().toISOString() })
-        .eq('order_number', tranId);
+        .eq('order_number', tranId)
+        .eq('payment_status', 'pending');
     }
     return res.redirect(302, `${siteUrl}/payment/cancel?order=${encodeURIComponent(tranId || '')}`);
   }

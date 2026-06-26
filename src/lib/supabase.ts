@@ -96,28 +96,9 @@ export async function validateCoupon(code: string) {
   return data;
 }
 
-// ===== Cloudinary Image Upload =====
-export async function uploadImage(file: File): Promise<string> {
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dpgevafrh';
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'girlswear';
-
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', uploadPreset);
-  formData.append('folder', 'girlswear-products');
-
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-    { method: 'POST', body: formData }
-  );
-
-  if (!response.ok) throw new Error('Image upload failed. Please try again.');
-  const data = await response.json();
-  return data.secure_url;
-}
 
 // ===== Google Sheets Integration =====
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwa4bS7VqUwYASkuM9jLsCfCn9HOcJlqDKw0EFO97CwCc9pkp85zJYeskBAcr_gncyL/exec';
+const GOOGLE_SHEET_URL = import.meta.env.VITE_GOOGLE_SHEET_URL;
 
 export async function sendOrderToGoogleSheets(order: Record<string, unknown>) {
   try {

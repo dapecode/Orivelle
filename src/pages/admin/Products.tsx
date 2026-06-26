@@ -259,7 +259,7 @@ const drawAGLogo = (
   ctx.textBaseline = 'alphabetic';
 
   const gap = size * 0.04;
-  const text = logoText.trim() || 'AG';
+  const text = logoText.trim() || `${BRAND.orderPrefix}-${Date.now().toString().slice(-6)}`;
   // Split into two halves: left = first half, right = second half
   const mid = Math.ceil(text.length / 2);
   const leftPart = text.slice(0, mid);
@@ -636,7 +636,7 @@ const MiniWatermarkThumb: React.FC<{
 }> = ({ file, xFrac, yFrac, textWmEnabled = false, textWmText = BRAND.watermarkText,
   textWmOpacity = 0.18, textWmSize = 22, textWmAngle = -30,
   textWmColor = '#ffffff', textWmSpacingX = 180, textWmSpacingY = 90,
-  logoText = 'AG', logoColorLeft = '#C0C0C0', logoColorRight = '#F5A623',
+  logoText = `${BRAND.orderPrefix}-${Date.now().toString().slice(-6)}`, logoColorLeft = '#C0C0C0', logoColorRight = '#F5A623',
   customLogoWm }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imgRef = useRef<HTMLImageElement | null>(null);
@@ -763,7 +763,7 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
   textWmEnabled = false, textWmText = BRAND.watermarkText,
   textWmOpacity = 0.18, textWmSize = 22, textWmAngle = -30,
   textWmColor = '#ffffff', textWmSpacingX = 180, textWmSpacingY = 90,
-  logoText = 'AG', logoColorLeft = '#C0C0C0', logoColorRight = '#F5A623',
+  logoText = `${BRAND.orderPrefix}-${Date.now().toString().slice(-6)}`, logoColorLeft = '#C0C0C0', logoColorRight = '#F5A623',
   customLogoWm,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -892,7 +892,7 @@ const WatermarkPreview: React.FC<WatermarkPreviewProps> = ({
         onDragStart={(e) => e.preventDefault()}
       />
       <p className="text-[10px] text-[#6B5B55] text-center mt-1 italic">
-        Click or drag to reposition the {customLogoWm?.enabled && customLogoWm?.imageDataUrl ? 'logo' : 'AG'} watermark
+        Click or drag to reposition the {customLogoWm?.enabled && customLogoWm?.imageDataUrl ? 'logo' : `${BRAND.orderPrefix}-${Date.now().toString().slice(-6)}`} watermark
       </p>
 
     </div>
@@ -1749,7 +1749,7 @@ export const AdminProducts: React.FC = () => {
                             <span className="text-[10px] text-[#6B5B55] font-mono">{agLogoColorRight}</span>
                             <button
                               type="button"
-                              onClick={() => { setAgLogoColorLeft('#C0C0C0'); setAgLogoColorRight('#F5A623'); setAgLogoText('AG'); }}
+                              onClick={() => { setAgLogoColorLeft('#C0C0C0'); setAgLogoColorRight('#F5A623'); setAgLogoText(`${BRAND.orderPrefix}-${Date.now().toString().slice(-6)}`); }}
                               className="ml-auto text-[10px] text-[#6B5B55] underline hover:text-rose-gold transition-colors"
                             >
                               Reset
