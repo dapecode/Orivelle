@@ -25,6 +25,13 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // ✅ Rate limit — inside handler, fires on every request
+    const ip = getClientIp(req);
+    const allowed = await checkRateLimit(`create-payment-intent:${ip}`, 5, 60);
+    if (!allowed) {
+        return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
+    }
+
     const { STRIPE_SECRET_KEY } = process.env;
 
     if (!STRIPE_SECRET_KEY) {
@@ -83,9 +90,4 @@ export default async function handler(req, res) {
         console.error('[create-payment-intent]', err);
         return res.status(500).json({ error: 'Failed to create payment intent.' });
     }
-}
-const ip = getClientIp(req);
-const allowed = await checkRateLimit(`create-payment-intent:${ip}`, 5, 60); // 5 req/min per IP
-if (!allowed) {
-    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
 }

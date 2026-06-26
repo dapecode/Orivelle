@@ -233,11 +233,7 @@ const RecentlyViewedProducts = memo(() => {
             id ties to aria-labelledby on the <section> — screen readers
             announce "Recently Viewed, region" when entering the section.
           */}
-          <SectionHeader
-            title="Recently Viewed"
-            subtitle="Pick up where you left off"
-            center={false}
-          />
+
           <div className="mb-4">
             <h2 className="text-base font-semibold text-charcoal">Recently Viewed</h2>
             <p className="text-xs text-[#6B5B55] mt-0.5">Pick up where you left off</p>

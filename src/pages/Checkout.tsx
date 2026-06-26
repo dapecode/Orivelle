@@ -9,6 +9,7 @@
 declare global { interface Window { dataLayer: any[]; } }
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Shield, CheckCircle, ArrowLeft,
@@ -631,39 +632,47 @@ const CheckoutForm: React.FC = () => {
   /* ── ORDER CONFIRMED ── */
   if (orderPlaced) {
     return (
-      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center" style={{ background: '#FAF6F3' }}>
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md mx-auto px-4">
-          <motion.div
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
-            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6"
-            style={{ background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)' }}>
-            <CheckCircle size={44} className="text-green-500" />
+      <>
+        <Helmet>
+          <title>Checkout | Orivelle</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+
+        <div className="min-h-screen pt-24 pb-16 flex items-center justify-center" style={{ background: '#FAF6F3' }}>
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+            className="text-center max-w-md mx-auto px-4">
+            <motion.div
+              initial={{ scale: 0 }} animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+              className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{ background: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)' }}>
+              <CheckCircle size={44} className="text-green-500" />
+            </motion.div>
+            <h1 className="heading-serif text-3xl font-bold text-charcoal mb-2">
+              {paymentMethod === 'stripe' || paymentMethod === 'sslcommerz' ? 'Order Saved' : 'Order Placed! 🎉'}
+            </h1>
+            <p className="text-warm-gray mb-2">Thank you for your order</p>
+            <p className="text-sm text-warm-gray mb-6">
+              Order Number: <strong className="text-charcoal">{orderNumber}</strong>
+            </p>
+            <div className="rounded-2xl p-5 mb-6 text-sm text-warm-gray text-left"
+              style={{ background: 'rgba(176,125,107,0.08)', border: '1px solid rgba(176,125,107,0.2)' }}>
+              {paymentMethod === 'cod'
+                ? '✅ Please pay in cash upon delivery.'
+                : paymentMethod === 'stripe' || paymentMethod === 'sslcommerz'
+                  ? '⚠️ We could not reach the payment page. Please contact us or try again.'
+                  : '✅ Your payment will be verified within 24 hours.'}
+            </div>
+
+            <button
+              onClick={() => navigate('/shop')}
+              className="px-8 py-3 rounded-2xl font-semibold text-sm text-white"
+              style={{ background: 'linear-gradient(135deg, #B07D6B, #C4956A)' }}>
+              Continue Shopping
+            </button>
           </motion.div>
-          <h1 className="heading-serif text-3xl font-bold text-charcoal mb-2">
-            {paymentMethod === 'stripe' || paymentMethod === 'sslcommerz' ? 'Order Saved' : 'Order Placed! 🎉'}
-          </h1>
-          <p className="text-warm-gray mb-2">Thank you for your order</p>
-          <p className="text-sm text-warm-gray mb-6">
-            Order Number: <strong className="text-charcoal">{orderNumber}</strong>
-          </p>
-          <div className="rounded-2xl p-5 mb-6 text-sm text-warm-gray text-left"
-            style={{ background: 'rgba(176,125,107,0.08)', border: '1px solid rgba(176,125,107,0.2)' }}>
-            {paymentMethod === 'cod'
-              ? '✅ Please pay in cash upon delivery.'
-              : paymentMethod === 'stripe' || paymentMethod === 'sslcommerz'
-                ? '⚠️ We could not reach the payment page. Please contact us or try again.'
-                : '✅ Your payment will be verified within 24 hours.'}
-          </div>
-          <button
-            onClick={() => navigate('/shop')}
-            className="px-8 py-3 rounded-2xl font-semibold text-sm text-white"
-            style={{ background: 'linear-gradient(135deg, #B07D6B, #C4956A)' }}>
-            Continue Shopping
-          </button>
-        </motion.div>
-      </div>
+        </div>
+      </>
     );
   }
 

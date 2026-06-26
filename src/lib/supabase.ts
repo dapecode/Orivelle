@@ -98,8 +98,6 @@ export async function validateCoupon(code: string) {
 
 
 // ===== Google Sheets Integration =====
-const GOOGLE_SHEET_URL = import.meta.env.VITE_GOOGLE_SHEET_URL;
-
 export async function sendOrderToGoogleSheets(order: Record<string, unknown>) {
   try {
     // Items array
@@ -170,9 +168,8 @@ export async function sendOrderToGoogleSheets(order: Record<string, unknown>) {
 
     console.log('Sending to Google Sheets:', payload);
 
-    await fetch(GOOGLE_SHEET_URL, {
+    await fetch('/api/log-order', {
       method: 'POST',
-      mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });

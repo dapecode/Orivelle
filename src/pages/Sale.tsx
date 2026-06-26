@@ -13,6 +13,7 @@ import { ProductCard } from '@/components/home';
 import { FadeIn, Button, Select } from '@/components/ui';
 import { useProductStore } from '@/store';
 import { useContentStore } from '@/store/contentStore';
+import { Helmet } from 'react-helmet-async';
 
 /* ─── Size options ─── */
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size'];
@@ -273,190 +274,197 @@ export const SalePage: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen pt-24 pb-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <>
+            <Helmet>
+                <title>Sale | Orivelle — Women's Fashion Deals Bangladesh</title>
+                <meta name="description" content="Shop Orivelle's sale collection. Discounted women's fashion including lingerie, dresses and more — delivered across Bangladesh." />
+                <link rel="canonical" href="https://orivelle.vercel.app/sale" />
+            </Helmet>
+            <div className="min-h-screen pt-24 pb-16">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-                {/* Sale Hero Banner */}
-                {content.saleBanners?.[0]?.active !== false && (
-                    <SaleHero banner={content.saleBanners?.[0]} />
-                )}
+                    {/* Sale Hero Banner */}
+                    {content.saleBanners?.[0]?.active !== false && (
+                        <SaleHero banner={content.saleBanners?.[0]} />
+                    )}
 
-                {/* Piece count */}
-                <FadeIn>
-                    <p className="text-[#6B5B55] text-sm mb-6 -mt-4">
-                        {filteredProducts.length}{' '}{filteredProducts.length === 1 ? 'piece' : 'pieces'} found
-                    </p>
-                </FadeIn>
+                    {/* Piece count */}
+                    <FadeIn>
+                        <p className="text-[#6B5B55] text-sm mb-6 -mt-4">
+                            {filteredProducts.length}{' '}{filteredProducts.length === 1 ? 'piece' : 'pieces'} found
+                        </p>
+                    </FadeIn>
 
-                {/* ── Toolbar ── */}
-                <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-                    {/* Left: Filter toggle */}
-                    <div className="flex items-center gap-3">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="gap-2"
-                        >
-                            <SlidersHorizontal size={16} />
-                            Filters
+                    {/* ── Toolbar ── */}
+                    <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+                        {/* Left: Filter toggle */}
+                        <div className="flex items-center gap-3">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowFilters(!showFilters)}
+                                className="gap-2"
+                            >
+                                <SlidersHorizontal size={16} />
+                                Filters
+                                {activeFilterCount > 0 && (
+                                    <span className="w-5 h-5 bg-rose-gold text-white text-xs rounded-full flex items-center justify-center">
+                                        {activeFilterCount}
+                                    </span>
+                                )}
+                            </Button>
                             {activeFilterCount > 0 && (
-                                <span className="w-5 h-5 bg-rose-gold text-white text-xs rounded-full flex items-center justify-center">
-                                    {activeFilterCount}
-                                </span>
+                                <button onClick={clearFilters} className="text-xs text-rose-gold hover:underline">
+                                    Clear all
+                                </button>
                             )}
-                        </Button>
-                        {activeFilterCount > 0 && (
-                            <button onClick={clearFilters} className="text-xs text-rose-gold hover:underline">
-                                Clear all
-                            </button>
-                        )}
-                    </div>
+                        </div>
 
-                    {/* Right: Sort + grid toggle */}
-                    <div className="flex items-center gap-3">
-                        <Select
-                            options={[
-                                { value: 'newest', label: 'Newest First' },
-                                { value: 'featured', label: 'Featured' },
-                                { value: 'price_asc', label: 'Price: Low to High' },
-                                { value: 'price_desc', label: 'Price: High to Low' },
-                            ]}
-                            value={sortFilter}
-                            onChange={e => updateSort(e.target.value)}
-                            className="!py-2 text-sm"
-                        />
-                        <div className="hidden md:flex items-center gap-1">
-                            <button
-                                onClick={() => setGridCols(3)}
-                                className={`p-2 rounded-lg ${gridCols === 3 ? 'bg-blush-light' : 'hover:bg-blush-light/50'} transition-colors`}
-                            >
-                                <Grid2X2 size={16} />
-                            </button>
-                            <button
-                                onClick={() => setGridCols(4)}
-                                className={`p-2 rounded-lg ${gridCols === 4 ? 'bg-blush-light' : 'hover:bg-blush-light/50'} transition-colors`}
-                            >
-                                <Grid3X3 size={16} />
-                            </button>
+                        {/* Right: Sort + grid toggle */}
+                        <div className="flex items-center gap-3">
+                            <Select
+                                options={[
+                                    { value: 'newest', label: 'Newest First' },
+                                    { value: 'featured', label: 'Featured' },
+                                    { value: 'price_asc', label: 'Price: Low to High' },
+                                    { value: 'price_desc', label: 'Price: High to Low' },
+                                ]}
+                                value={sortFilter}
+                                onChange={e => updateSort(e.target.value)}
+                                className="!py-2 text-sm"
+                            />
+                            <div className="hidden md:flex items-center gap-1">
+                                <button
+                                    onClick={() => setGridCols(3)}
+                                    className={`p-2 rounded-lg ${gridCols === 3 ? 'bg-blush-light' : 'hover:bg-blush-light/50'} transition-colors`}
+                                >
+                                    <Grid2X2 size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setGridCols(4)}
+                                    className={`p-2 rounded-lg ${gridCols === 4 ? 'bg-blush-light' : 'hover:bg-blush-light/50'} transition-colors`}
+                                >
+                                    <Grid3X3 size={16} />
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* ── Mobile Filter Bottom Sheet ── */}
-                <AnimatePresence>
-                    {showFilters && (
-                        <>
-                            <motion.div
-                                key="mobile-filter-backdrop"
-                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="fixed inset-0 bg-black/40 z-40 md:hidden"
-                                onClick={() => setShowFilters(false)}
-                            />
-                            <motion.div
-                                key="mobile-filter-sheet"
-                                initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-                                transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-                                className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white rounded-t-3xl shadow-2xl max-h-[82vh] overflow-y-auto"
-                            >
-                                <div className="flex justify-center pt-3 pb-1">
-                                    <div className="w-10 h-1 rounded-full bg-gray-300" />
-                                </div>
-                                <div className="flex items-center justify-between px-5 py-3 border-b border-blush/30">
-                                    <span className="text-base font-semibold text-charcoal">Filters</span>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowFilters(false)}
-                                        className="p-1.5 rounded-full hover:bg-blush-light transition-colors"
-                                        aria-label="Close filters"
-                                    >
-                                        <X size={18} className="text-[#6B5B55]" />
-                                    </button>
-                                </div>
-                                <div className="px-5 py-5">
-                                    <FilterPanel />
-                                    <div className="flex gap-3 pt-6 pb-safe">
-                                        <button
-                                            type="button"
-                                            onClick={clearFilters}
-                                            className="flex-1 py-3 rounded-xl border-2 border-blush/40 text-sm font-medium text-[#6B5B55] hover:border-rose-gold transition-colors"
-                                        >
-                                            Clear All
-                                        </button>
+                    {/* ── Mobile Filter Bottom Sheet ── */}
+                    <AnimatePresence>
+                        {showFilters && (
+                            <>
+                                <motion.div
+                                    key="mobile-filter-backdrop"
+                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                    className="fixed inset-0 bg-black/40 z-40 md:hidden"
+                                    onClick={() => setShowFilters(false)}
+                                />
+                                <motion.div
+                                    key="mobile-filter-sheet"
+                                    initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                                    transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+                                    className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white rounded-t-3xl shadow-2xl max-h-[82vh] overflow-y-auto"
+                                >
+                                    <div className="flex justify-center pt-3 pb-1">
+                                        <div className="w-10 h-1 rounded-full bg-gray-300" />
+                                    </div>
+                                    <div className="flex items-center justify-between px-5 py-3 border-b border-blush/30">
+                                        <span className="text-base font-semibold text-charcoal">Filters</span>
                                         <button
                                             type="button"
                                             onClick={() => setShowFilters(false)}
-                                            className="flex-1 py-3 rounded-xl bg-rose-gold text-white text-sm font-semibold hover:bg-deep-rose transition-colors"
+                                            className="p-1.5 rounded-full hover:bg-blush-light transition-colors"
+                                            aria-label="Close filters"
                                         >
-                                            Show {filteredProducts.length} Results
+                                            <X size={18} className="text-[#6B5B55]" />
                                         </button>
                                     </div>
-                                </div>
-                            </motion.div>
-                        </>
-                    )}
-                </AnimatePresence>
-
-                <div className="flex gap-8">
-
-                    {/* ── Desktop Sidebar Filter ── */}
-                    <AnimatePresence>
-                        {showFilters && (
-                            <motion.aside
-                                initial={{ width: 0, opacity: 0 }}
-                                animate={{ width: 256, opacity: 1 }}
-                                exit={{ width: 0, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="hidden md:block flex-shrink-0 overflow-hidden"
-                            >
-                                <div className="w-64">
-                                    <FilterPanel />
-                                </div>
-                            </motion.aside>
+                                    <div className="px-5 py-5">
+                                        <FilterPanel />
+                                        <div className="flex gap-3 pt-6 pb-safe">
+                                            <button
+                                                type="button"
+                                                onClick={clearFilters}
+                                                className="flex-1 py-3 rounded-xl border-2 border-blush/40 text-sm font-medium text-[#6B5B55] hover:border-rose-gold transition-colors"
+                                            >
+                                                Clear All
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowFilters(false)}
+                                                className="flex-1 py-3 rounded-xl bg-rose-gold text-white text-sm font-semibold hover:bg-deep-rose transition-colors"
+                                            >
+                                                Show {filteredProducts.length} Results
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </>
                         )}
                     </AnimatePresence>
 
-                    {/* ── Products Grid ── */}
-                    <div className="flex-1">
-                        {loading ? (
-                            <div className="text-center py-20">
-                                <p className="text-[#6B5B55]">Loading products...</p>
-                            </div>
-                        ) : filteredProducts.length === 0 ? (
-                            <div className="text-center py-20">
-                                <h3 className="heading-serif text-2xl font-semibold text-charcoal mb-2">
-                                    No products found
-                                </h3>
-                                <p className="text-[#6B5B55] mb-6">
-                                    No sale items matching your filters. Check back soon!
-                                </p>
-                                <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
-                            </div>
-                        ) : (
-                            <motion.div
-                                layout
-                                className={`grid gap-4 md:gap-6 ${gridCols === 3
-                                    ? 'grid-cols-2 md:grid-cols-3'
-                                    : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-                                    }`}
-                            >
-                                {filteredProducts.map((product, index) => (
-                                    <motion.div
-                                        key={product.id}
-                                        layout
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: Math.min(index * 0.05, 0.3) }}
-                                    >
-                                        <ProductCard product={product} priority={index < 4} />
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        )}
-                    </div>
+                    <div className="flex gap-8">
 
+                        {/* ── Desktop Sidebar Filter ── */}
+                        <AnimatePresence>
+                            {showFilters && (
+                                <motion.aside
+                                    initial={{ width: 0, opacity: 0 }}
+                                    animate={{ width: 256, opacity: 1 }}
+                                    exit={{ width: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="hidden md:block flex-shrink-0 overflow-hidden"
+                                >
+                                    <div className="w-64">
+                                        <FilterPanel />
+                                    </div>
+                                </motion.aside>
+                            )}
+                        </AnimatePresence>
+
+                        {/* ── Products Grid ── */}
+                        <div className="flex-1">
+                            {loading ? (
+                                <div className="text-center py-20">
+                                    <p className="text-[#6B5B55]">Loading products...</p>
+                                </div>
+                            ) : filteredProducts.length === 0 ? (
+                                <div className="text-center py-20">
+                                    <h3 className="heading-serif text-2xl font-semibold text-charcoal mb-2">
+                                        No products found
+                                    </h3>
+                                    <p className="text-[#6B5B55] mb-6">
+                                        No sale items matching your filters. Check back soon!
+                                    </p>
+                                    <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
+                                </div>
+                            ) : (
+                                <motion.div
+                                    layout
+                                    className={`grid gap-4 md:gap-6 ${gridCols === 3
+                                        ? 'grid-cols-2 md:grid-cols-3'
+                                        : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                                        }`}
+                                >
+                                    {filteredProducts.map((product, index) => (
+                                        <motion.div
+                                            key={product.id}
+                                            layout
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: Math.min(index * 0.05, 0.3) }}
+                                        >
+                                            <ProductCard product={product} priority={index < 4} />
+                                        </motion.div>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </div>
+
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 };

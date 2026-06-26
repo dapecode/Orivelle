@@ -11,6 +11,9 @@ import { useCartStore } from '@/store';
 
 type PollState = 'checking' | 'verified' | 'pending' | 'failed';
 
+type OrderStatusResponse = {
+  payment_status: 'verified' | 'failed' | 'pending';
+};
 export const PaymentSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const orderNumber = searchParams.get('order') || '';
@@ -31,21 +34,24 @@ export const PaymentSuccessPage: React.FC = () => {
     // poll briefly rather than trusting a single read.
     const poll = async () => {
       attempts += 1;
+      // Uses the get_order_status RPC (not a direct .from('orders').select())
+      // so the anon key can only ever see this one narrow status row for the
+      // order_number it already knows — never the full orders table.
       const { data, error } = await supabase
-        .from('orders')
-        .select('payment_status')
-        .eq('order_number', orderNumber)
+        .rpc('get_order_status', { p_order_number: orderNumber })
         .single();
+
+      const order = data as OrderStatusResponse | null;
 
       if (cancelled) return;
 
-      if (!error && data?.payment_status === 'verified') {
+      if (!error && order?.payment_status === 'verified') {
         setState('verified');
         clearCart();
         return;
       }
 
-      if (!error && data?.payment_status === 'failed') {
+      if (!error && order?.payment_status === 'failed') {
         setState('failed');
         return;
       }
