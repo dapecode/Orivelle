@@ -39,8 +39,9 @@ export const AdminCoupons: React.FC = () => {
       });
       setShowModal(false);
       setForm({ code: '', discount: 0, type: 'percentage', minOrderAmount: 0, maxUses: 100, expiresAt: '' });
-    } catch {
-      // optionally surface an error toast here
+    } catch (err) {
+      console.error('Failed to create coupon:', err);
+      alert(err instanceof Error ? err.message : 'Failed to create coupon');
     }
   };
 

@@ -9,7 +9,7 @@ function rowToCoupon(row: Record<string, unknown>): Coupon {
         id: String(row.id),
         code: String(row.code ?? ''),
         discount: Number(row.discount ?? 0),
-        type: (row.discount_type as 'percentage' | 'fixed') ?? 'percentage',
+        type: (row.type as 'percentage' | 'fixed') ?? 'percentage',
         minOrderAmount: Number(row.min_order_amount ?? 0),
         maxUses: Number(row.max_uses ?? 0),
         usedCount: Number(row.used_count ?? 0),
@@ -23,7 +23,7 @@ function couponToRow(c: Partial<Coupon>): Record<string, unknown> {
     const row: Record<string, unknown> = {};
     if (c.code !== undefined) row.code = c.code;
     if (c.discount !== undefined) row.discount = c.discount;
-    if (c.type !== undefined) row.discount_type = c.type;
+    if (c.type !== undefined) row.type = c.type;
     if (c.minOrderAmount !== undefined) row.min_order_amount = c.minOrderAmount;
     if (c.maxUses !== undefined) row.max_uses = c.maxUses;
     if (c.usedCount !== undefined) row.used_count = c.usedCount;
