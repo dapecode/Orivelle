@@ -10,6 +10,7 @@ import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag } from 'lucide-react'
 import { Button, EmptyState, PriceDisplay } from '@/components/ui';
 import { useCartStore } from '@/store';
 import { SITE } from '@/config/siteConfig';
+console.log('SITE at module load:', SITE);
 
 export const CartPage: React.FC = () => {
   const navigate = useNavigate();

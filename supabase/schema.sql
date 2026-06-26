@@ -272,9 +272,31 @@ CREATE POLICY "Customers can view own orders" ON orders FOR SELECT USING (custom
 CREATE POLICY "Customers can view own order items" ON order_items FOR SELECT USING (order_id IN (SELECT id FROM orders WHERE customer_id = auth.uid()));
 CREATE POLICY "Customers can manage own wishlist" ON wishlist FOR ALL USING (customer_id = auth.uid());
 
--- Admin full access policies (for authenticated admin users)
--- In production, create a custom admin role and apply policies accordingly
--- Example: CREATE POLICY "Admin full access" ON products FOR ALL USING (auth.jwt() ->> 'role' = 'admin');
+-- Guests can place orders (checkout has no login)
+CREATE POLICY "Anyone can place an order" ON orders FOR INSERT WITH CHECK (TRUE);
+CREATE POLICY "Anyone can add items to an order" ON order_items FOR INSERT WITH CHECK (TRUE);
+
+-- Guests can look up their own order by order_number (for payment confirmation page)
+CREATE POLICY "Anyone can look up an order by number" ON orders FOR SELECT USING (TRUE);
+
+-- ===== ADMIN ACCESS =====
+-- Checks the signed-in user's email against the admins table.
+-- SECURITY DEFINER lets this bypass RLS on `admins` itself so it doesn't recurse.
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM admins WHERE email = auth.jwt() ->> 'email'
+  );
+$$;
+
+CREATE POLICY "Admins can manage products" ON products FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "Admins can manage categories" ON categories FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "Admins can manage orders" ON orders FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "Admins can manage order items" ON order_items FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 
 -- ==========================================
 -- USEFUL INDEXES

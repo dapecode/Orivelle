@@ -15,12 +15,13 @@ import {
   Tag, AlertCircle, Package, X,
   CreditCard, Truck, Zap,
 } from 'lucide-react';
-import { useCartStore, useOrderStore, useAdminDataStore } from '@/store';
+import { useCartStore, useOrderStore, useCouponStore } from '@/store';
 import { sendOrderToGoogleSheets } from '@/lib/supabase';
 import type { PaymentMethod, Product, } from '@/types';
 import { trackInitiateCheckout, trackPurchase } from '@/lib/facebookPixel';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { SITE } from '@/config/siteConfig';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -224,7 +225,8 @@ const CheckoutForm: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { items, getSubtotal, getDiscount, clearCart } = useCartStore();
-  const { coupons } = useAdminDataStore();
+  const { coupons, loadCoupons } = useCouponStore();
+  React.useEffect(() => { loadCoupons(); }, [loadCoupons]);
   const { placeOrder } = useOrderStore();
 
   const buyNow = location.state as BuyNowState | null;

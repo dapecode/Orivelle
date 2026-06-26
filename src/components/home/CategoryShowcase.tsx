@@ -4,13 +4,21 @@ import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { FadeIn, SectionHeader } from '@/components/ui';
 import { useCategoryStore } from '@/store';
 import { useAutoScroll } from './useAutoScroll';
+import { useProductStore } from '@/store';
 
 export const CategoryShowcase: React.FC = () => {
     const navigate = useNavigate();
     const { categories } = useCategoryStore();
+    const { products } = useProductStore();  // ← add
+
+    // ← add this derived list
+    const categoriesWithCount = categories.map(cat => ({
+        ...cat,
+        productCount: products.filter(p => p.category === cat.name).length
+    }));
 
     const CARD_WIDTH = 260 + 16;
-    const allSlides = [...categories, ...categories, ...categories];
+    const allSlides = [...categoriesWithCount, ...categoriesWithCount, ...categoriesWithCount]; // ← swap categories → categoriesWithCount
 
     const { trackRef, isPausedRef, handlePrev, handleNext } = useAutoScroll(
         categories.length,

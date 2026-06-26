@@ -4,8 +4,9 @@ declare global { interface Window { dataLayer: any[]; } }
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CartItem, Product, Coupon } from '@/types';
-import { useAdminDataStore } from '@/store';
+import { useCouponStore } from './couponStore';
 import { trackAddToCart } from '@/lib/facebookPixel';
+import { SITE } from '@/config/siteConfig';
 
 interface CartStore {
   items: CartItem[];
@@ -122,10 +123,8 @@ export const useCartStore = create<CartStore>()(
         set({ items: [], coupon: null, couponCode: '', couponError: '' }),
 
       applyCoupon: (code) => {
-        // ✅ Pull real, live coupons created in the admin panel
-        // (was previously reading from a static mockData array,
-        // so admin-created coupons could never be found here)
-        const coupon = useAdminDataStore
+        // ✅ Pull real, live coupons from Supabase (admin-created coupons)
+        const coupon = useCouponStore
           .getState()
           .coupons.find(
             (c) => c.code.toLowerCase() === code.toLowerCase() && c.isActive,

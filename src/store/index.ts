@@ -15,7 +15,7 @@
 // ── Persisted (localStorage) ────────────────────────────────────────────────
 export { useCartStore } from './cartStore';
 export { useAdminAuthStore } from './adminAuthStore';
-export { useAdminDataStore } from './adminDataStore';
+export { useCouponStore } from './couponStore';
 export { useRecentlyViewedStore, useUIStore } from './uiStore';
 
 // ── Supabase-backed (no localStorage) ───────────────────────────────────────

@@ -1,3 +1,7 @@
+// ------new version -------
+
+
+
 // dataLayer global type declaration — kept at file scope so GTM pushes are typed
 declare global {
   interface Window { dataLayer: any[] }

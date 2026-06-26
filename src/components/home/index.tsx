@@ -6,3 +6,4 @@ export { Category } from './Category';
 export { TrendingProducts } from './TrendingProducts';
 export { ProductCard } from './ProductCard';
 export { FeaturedCollection } from './FeaturedCollection';
+import { useProductStore } from '@/store';

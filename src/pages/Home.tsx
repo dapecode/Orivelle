@@ -159,12 +159,12 @@ const BUSINESS_SCHEMA_STR = JSON.stringify(localBusinessSchema);
 
 const RecentlyViewedSkeletonCard = memo<{ index: number }>(({ index }) => (
   <li
-    className="flex-shrink-0 w-[200px] sm:w-[220px]"
+    className="flex-shrink-0 w-[120px] sm:w-[140px]"
     aria-hidden="true"
     style={{
       // Reserve space before images load — prevents CLS
       contentVisibility: 'auto',
-      containIntrinsicSize: '220px 380px',
+      containIntrinsicSize: '140px 230px',
     }}
   >
     <div
@@ -227,7 +227,7 @@ const RecentlyViewedProducts = memo(() => {
       style={{ backgroundColor: '#FAF7F3' }}
       aria-labelledby="recently-viewed-heading"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         <FadeIn>
           {/*
             id ties to aria-labelledby on the <section> — screen readers
@@ -238,6 +238,10 @@ const RecentlyViewedProducts = memo(() => {
             subtitle="Pick up where you left off"
             center={false}
           />
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-charcoal">Recently Viewed</h2>
+            <p className="text-xs text-[#6B5B55] mt-0.5">Pick up where you left off</p>
+          </div>
         </FadeIn>
       </div>
 
@@ -249,7 +253,7 @@ const RecentlyViewedProducts = memo(() => {
             min-height prevents CLS when the list switches from skeletons
             to real cards — both states are approximately the same height.
           */
-          style={{ minHeight: '320px' }}
+          style={{ minHeight: '200px' }}
         >
           {isInitialLoading
             ? Array.from({ length: 4 }).map((_, idx) => (
@@ -270,14 +274,14 @@ const RecentlyViewedProducts = memo(() => {
               return (
                 <li
                   key={product.id}
-                  className="flex-shrink-0 w-[200px] sm:w-[220px]"
+                  className="flex-shrink-0 w-[120px] sm:w-[140px]"
                   /*
                     content-visibility defers off-screen rendering,
                     reducing main-thread work during initial load.
                   */
                   style={{
                     contentVisibility: 'auto',
-                    containIntrinsicSize: '220px 380px',
+                    containIntrinsicSize: '140px 230px',
                   }}
                 >
                   <Link
@@ -302,8 +306,8 @@ const RecentlyViewedProducts = memo(() => {
                           */
                           loading="lazy"
                           decoding="async"
-                          width={440}
-                          height={587}
+                          width={200}
+                          height={370}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       ) : (
@@ -327,11 +331,11 @@ const RecentlyViewedProducts = memo(() => {
                     </div>
 
                     {/* Text below photo */}
-                    <div className="pt-3 px-1">
+                    <div className="pt-1.0 px-0.3">
                       {product.category && (
                         <p className="text-xs text-[#6B5B55] mb-0.5">{product.category}</p>
                       )}
-                      <h3 className="text-sm font-medium text-charcoal mb-1 line-clamp-1 group-hover:text-rose-gold transition-colors">
+                      <h3 className="text-xs font-medium text-charcoal mb-1 line-clamp-1 group-hover:text-rose-gold transition-colors">
                         {product.name}
                       </h3>
                       <PriceDisplay

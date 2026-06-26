@@ -11,36 +11,37 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, AlertTriangle, TrendingUp, DollarSign, ShoppingBag, BarChart3, X, XCircle } from 'lucide-react';
 import { Button, Input, Select, Badge, Modal } from '@/components/ui';
-import { useAdminDataStore, useProductStore, useOrderStore } from '@/store';
+import { useCouponStore, useProductStore, useOrderStore } from '@/store';
 import type { Coupon } from '@/types';
 
 // ==========================================
 // COUPONS ADMIN — already worked, kept as-is
 // ==========================================
 export const AdminCoupons: React.FC = () => {
-  const { coupons, addCoupon, deleteCoupon, toggleCoupon } = useAdminDataStore();
+  const { coupons, addCoupon, deleteCoupon, toggleCoupon, loadCoupons } = useCouponStore();
+  React.useEffect(() => { loadCoupons(); }, [loadCoupons]);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
     code: '', discount: 0, type: 'percentage' as 'percentage' | 'fixed',
     minOrderAmount: 0, maxUses: 100, expiresAt: '',
   });
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.code.trim()) return;
-    addCoupon({
-      id: Date.now().toString(),
-      code: form.code.toUpperCase(),
-      discount: form.discount,
-      type: form.type,
-      minOrderAmount: form.minOrderAmount,
-      maxUses: form.maxUses,
-      usedCount: 0,
-      expiresAt: form.expiresAt || '2026-12-31',
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    } as Coupon);
-    setShowModal(false);
-    setForm({ code: '', discount: 0, type: 'percentage', minOrderAmount: 0, maxUses: 100, expiresAt: '' });
+    try {
+      await addCoupon({
+        code: form.code.toUpperCase(),
+        discount: form.discount,
+        type: form.type,
+        minOrderAmount: form.minOrderAmount,
+        maxUses: form.maxUses,
+        expiresAt: form.expiresAt || '2026-12-31',
+      });
+      setShowModal(false);
+      setForm({ code: '', discount: 0, type: 'percentage', minOrderAmount: 0, maxUses: 100, expiresAt: '' });
+    } catch {
+      // optionally surface an error toast here
+    }
   };
 
   return (
