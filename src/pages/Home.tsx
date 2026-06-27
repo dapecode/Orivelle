@@ -20,7 +20,7 @@ import {
   TrendingProducts,
   NewArrivals,
 } from '@/components/home';
-import { FadeIn, SectionHeader, PriceDisplay, Badge } from '@/components/ui';
+import { FadeIn, SectionHeader, PriceDisplay } from '@/components/ui';
 import { useProductStore } from '@/store';
 import { useRecentlyViewedStore } from '@/store/uiStore';
 import { getOptimizedImageUrl, getResponsiveSrcSet } from '@/lib/cloudinary';
@@ -229,15 +229,7 @@ const RecentlyViewedProducts = memo(() => {
     >
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         <FadeIn>
-          {/*
-            id ties to aria-labelledby on the <section> — screen readers
-            announce "Recently Viewed, region" when entering the section.
-          */}
-          <SectionHeader
-            title="Recently Viewed"
-            subtitle="Pick up where you left off"
-            center={false}
-          />
+
           <div className="mb-4">
             <h2 className="text-base font-semibold text-charcoal">Recently Viewed</h2>
             <p className="text-xs text-[#6B5B55] mt-0.5">Pick up where you left off</p>
@@ -315,18 +307,6 @@ const RecentlyViewedProducts = memo(() => {
                           className="absolute inset-0 bg-gradient-to-br from-blush via-lavender to-champagne"
                           aria-hidden="true"
                         />
-                      )}
-
-                      {/* Badges — grouped so they share a single stacking context */}
-                      {(product.isOnSale || product.isNewArrival || product.isTrending) && (
-                        <div
-                          className="absolute top-3 left-3 flex flex-col gap-1.5 z-10"
-                          aria-hidden="true"
-                        >
-                          {product.isOnSale && <Badge variant="sale">Sale</Badge>}
-                          {product.isNewArrival && <Badge variant="new">New</Badge>}
-                          {product.isTrending && <Badge variant="trending">Trending</Badge>}
-                        </div>
                       )}
                     </div>
 
