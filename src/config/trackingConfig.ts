@@ -6,16 +6,21 @@
 import { SITE } from '@/config/siteConfig';
 export const trackingConfig = {
     /**
-     * Facebook Pixel ID — hardcoded to match index.html init snippet.
-     * If you ever change the Pixel ID, update BOTH this file AND index.html.
+     * Facebook Pixel ID — read from VITE_FB_PIXEL_ID (Vercel env var).
+     * Falls back to the known ID if the env var isn't set, so nothing
+     * breaks if you haven't added it to Vercel yet — but you should:
+     * Vercel Project Settings > Environment Variables > VITE_FB_PIXEL_ID.
+     * index.html reads the SAME env var via Vite's %VITE_*% placeholder
+     * substitution, so both stay in sync automatically.
      */
-    facebookPixelId: '517991158551582',
+    facebookPixelId: import.meta.env.VITE_FB_PIXEL_ID || '517991158551582',
 
     /**
-     * Google Tag Manager container ID — matches index.html GTM snippet.
-     * Format: GTM-XXXXXXX
+     * Google Tag Manager container ID — read from VITE_GTM_ID (Vercel env var).
+     * Format: GTM-XXXXXXX. Falls back to the known ID if unset.
+     * index.html reads the SAME env var, so both stay in sync automatically.
      */
-    gtmId: 'GTM-TWN3NF5S',
+    gtmId: import.meta.env.VITE_GTM_ID || 'GTM-TWN3NF5S',
 
     /**
      * Google Search Console HTML-tag verification content value.

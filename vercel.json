@@ -1,5 +1,5 @@
 {
-    "buildCommand": "node node_modules/vite/bin/vite.js build",
+    "buildCommand": "node scripts/generate-sitemap.js && node node_modules/vite/bin/vite.js build",
     "outputDirectory": "dist",
     "framework": "vite",
     "headers": [

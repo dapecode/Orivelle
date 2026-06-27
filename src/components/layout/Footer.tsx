@@ -104,16 +104,32 @@ export const Footer: React.FC = () => {
   // Kick off fetch + realtime subscription
   useCategoriesSync();
 
-  // Newsletter input — local only, wire up to your
-  // existing subscribe endpoint/Apps Script if you have one
+  // Newsletter signup — inserts into the newsletter_subscribers table.
+  // RLS allows public INSERT only (see migration 005); nobody can read
+  // the list back through the anon key.
   const [email, setEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'duplicate'>('idle');
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    // TODO: wire to your existing newsletter capture
-    // (Google Sheets Apps Script / Supabase table / etc.)
-    console.log('Newsletter signup:', email);
+    if (!email || newsletterStatus === 'loading') return;
+
+    setNewsletterStatus('loading');
+    const { error } = await supabase
+      .from('newsletter_subscribers')
+      .insert({ email: email.trim().toLowerCase(), source: 'footer' });
+
+    if (error) {
+      // Postgres unique_violation — they're already subscribed, treat as success
+      if (error.code === '23505') {
+        setNewsletterStatus('duplicate');
+      } else {
+        setNewsletterStatus('error');
+      }
+      return;
+    }
+
+    setNewsletterStatus('success');
     setEmail('');
   };
 
@@ -278,23 +294,38 @@ export const Footer: React.FC = () => {
             <p className="text-sm text-white/50 mb-3 leading-relaxed">
               Get 10% off your first order
             </p>
-            <form onSubmit={handleNewsletterSubmit} className="flex gap-1.5">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
-                className="flex-1 text-sm px-3 py-2 rounded-md border border-white/15 bg-white focus:outline-none focus:ring-1 focus:ring-rose-gold-dark"
-              />
-              <button
-                type="submit"
-                aria-label="Subscribe"
-                className="px-3 rounded-md bg-white text-black hover:bg-rose-gold-dark hover:text-white transition-colors"
-              >
-                <ArrowRight size={16} />
-              </button>
-            </form>
+            {newsletterStatus === 'success' || newsletterStatus === 'duplicate' ? (
+              <p className="text-sm text-rose-gold-dark font-medium" role="status">
+                {newsletterStatus === 'duplicate' ? "You're already on the list!" : "Thanks for subscribing!"}
+              </p>
+            ) : (
+              <>
+                <form onSubmit={handleNewsletterSubmit} className="flex gap-1.5">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email address"
+                    disabled={newsletterStatus === 'loading'}
+                    className="flex-1 text-sm px-3 py-2 rounded-md border border-white/15 bg-white focus:outline-none focus:ring-1 focus:ring-rose-gold-dark disabled:opacity-60"
+                  />
+                  <button
+                    type="submit"
+                    aria-label="Subscribe"
+                    disabled={newsletterStatus === 'loading'}
+                    className="px-3 rounded-md bg-white text-black hover:bg-rose-gold-dark hover:text-white transition-colors disabled:opacity-60"
+                  >
+                    <ArrowRight size={16} />
+                  </button>
+                </form>
+                {newsletterStatus === 'error' && (
+                  <p className="text-xs text-red-300 mt-1.5" role="alert">
+                    Something went wrong — please try again.
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </div>
 

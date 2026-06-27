@@ -11,9 +11,6 @@ import { useCartStore } from '@/store';
 
 type PollState = 'checking' | 'verified' | 'pending' | 'failed';
 
-type OrderStatusResponse = {
-  payment_status: 'verified' | 'failed' | 'pending';
-};
 export const PaymentSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const orderNumber = searchParams.get('order') || '';
@@ -39,19 +36,17 @@ export const PaymentSuccessPage: React.FC = () => {
       // order_number it already knows — never the full orders table.
       const { data, error } = await supabase
         .rpc('get_order_status', { p_order_number: orderNumber })
-        .single();
-
-      const order = data as OrderStatusResponse | null;
+        .single<{ order_number: string; payment_status: string; status: string }>();
 
       if (cancelled) return;
 
-      if (!error && order?.payment_status === 'verified') {
+      if (!error && data?.payment_status === 'verified') {
         setState('verified');
         clearCart();
         return;
       }
 
-      if (!error && order?.payment_status === 'failed') {
+      if (!error && data?.payment_status === 'failed') {
         setState('failed');
         return;
       }

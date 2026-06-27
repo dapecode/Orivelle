@@ -59,7 +59,7 @@ export interface SEOProps {
 
 const DEFAULTS = {
     siteName: "My Site",
-    locale: "en_US",
+    locale: "en_BD",
     ogType: "website" as OpenGraphType,
     twitterCard: "summary_large_image" as TwitterCardType,
     robots: ["index", "follow"] as RobotsDirective[],

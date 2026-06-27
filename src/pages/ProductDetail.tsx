@@ -568,7 +568,7 @@ export const ProductDetailPage: React.FC = () => {
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="1200" />
           <meta property="og:image:alt" content={`${product.name} — ${BRAND.fullName}`} />
-          <meta property="og:locale" content="en_US" />
+          <meta property="og:locale" content="en_BD" />
           {/* Facebook Commerce / Catalog product meta */}
           <meta property="product:price:amount" content={String(product.price)} />
           <meta property="product:price:currency" content={SITE.currency.code} />

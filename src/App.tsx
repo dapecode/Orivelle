@@ -220,7 +220,7 @@ const DefaultSEO = memo(() => {
       <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content={`${siteName} — ${title}`} />
       <meta property="og:url" content={canonical} />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content="en_BD" />
 
       {/* ── Twitter Card ──────────────────────────────────────────── */}
       <meta name="twitter:card" content="summary_large_image" />

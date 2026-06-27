@@ -314,7 +314,10 @@
 
   <!-- ═══════════════════════════════════════════════════════════════════
        ANALYTICS — FACEBOOK PIXEL
-       ID: 517991158551582 (matches trackingConfig.ts → facebookPixelId)
+       ID is injected from VITE_FB_PIXEL_ID at build time (set in Vercel
+       Project Settings > Environment Variables). Vite replaces %VITE_*%
+       placeholders in index.html during build — see trackingConfig.ts
+       for the matching import.meta.env read used by the React app.
 
        Uses `defer` so the Pixel script NEVER blocks the LCP paint.
        The script creates window.fbq and queues events before the
@@ -333,13 +336,15 @@
       t = b.createElement(e); t.async = !0; t.src = v;
       s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
     }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '517991158551582');
+    fbq('init', '%VITE_FB_PIXEL_ID%');
     /* PageView fired per-route by PixelTracker in App.tsx */
   </script>
 
   <!-- ═══════════════════════════════════════════════════════════════════
        ANALYTICS — GOOGLE TAG MANAGER
-       ID: GTM-TWN3NF5S (matches trackingConfig.ts → gtmId)
+       ID is injected from VITE_GTM_ID at build time (set in Vercel
+       Project Settings > Environment Variables). See trackingConfig.ts
+       for the matching import.meta.env read used by the React app.
 
        Uses `defer` so GTM NEVER blocks the LCP paint.
        The dataLayer array is pre-created so push() calls before GTM
@@ -356,7 +361,7 @@
       j.async = true;
       j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
       f.parentNode.insertBefore(j, f);
-    })(window, document, 'script', 'dataLayer', 'GTM-TWN3NF5S');
+    })(window, document, 'script', 'dataLayer', '%VITE_GTM_ID%');
   </script>
 
 </head>
@@ -366,12 +371,13 @@
   <!-- ═══════════════════════════════════════════════════════════════════
        NO-SCRIPT FALLBACKS
        Fires basic tracking for users / crawlers with JS disabled.
-       IDs match the inline scripts above.
+       IDs are injected from the same VITE_FB_PIXEL_ID / VITE_GTM_ID
+       env vars as the inline scripts above.
   ═══════════════════════════════════════════════════════════════════ -->
 
   <!-- GTM noscript iframe (must be first element inside <body>) -->
   <noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TWN3NF5S" height="0" width="0"
+    <iframe src="https://www.googletagmanager.com/ns.html?id=%VITE_GTM_ID%" height="0" width="0"
       style="display:none;visibility:hidden" title="Google Tag Manager" aria-hidden="true">
     </iframe>
   </noscript>
@@ -379,7 +385,7 @@
   <!-- Facebook Pixel noscript image pixel -->
   <noscript>
     <img height="1" width="1" style="display:none"
-      src="https://www.facebook.com/tr?id=517991158551582&ev=PageView&noscript=1" alt="" aria-hidden="true" />
+      src="https://www.facebook.com/tr?id=%VITE_FB_PIXEL_ID%&ev=PageView&noscript=1" alt="" aria-hidden="true" />
   </noscript>
 
   <!-- ═══════════════════════════════════════════════════════════════════

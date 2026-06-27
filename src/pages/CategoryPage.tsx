@@ -300,7 +300,7 @@ export const CategoryPage: React.FC = () => {
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
           <meta property="og:image:alt" content={`${category.name} collection — ${BRAND.fullName}`} />
-          <meta property="og:locale" content="en_US" />
+          <meta property="og:locale" content="en_BD" />
           <meta property="og:locale:alternate" content="bn_BD" />
 
           {/* Twitter Card */}
@@ -401,8 +401,8 @@ export const CategoryPage: React.FC = () => {
               */}
               <h1
                 className={`heading-serif text-3xl md:text-5xl font-bold mb-3 ${category.image?.startsWith('http')
-                    ? 'text-white drop-shadow-lg'
-                    : 'text-charcoal'
+                  ? 'text-white drop-shadow-lg'
+                  : 'text-charcoal'
                   }`}
               >
                 {category.name}
@@ -411,8 +411,8 @@ export const CategoryPage: React.FC = () => {
               {category.description && (
                 <p
                   className={`max-w-xl leading-relaxed ${category.image?.startsWith('http')
-                      ? 'text-white/90 drop-shadow'
-                      : 'text-[#6B5B55]'
+                    ? 'text-white/90 drop-shadow'
+                    : 'text-[#6B5B55]'
                     }`}
                 >
                   {category.description}
@@ -426,8 +426,8 @@ export const CategoryPage: React.FC = () => {
               */}
               <p
                 className={`text-sm mt-4 ${category.image?.startsWith('http')
-                    ? 'text-white/80'
-                    : 'text-[#6B5B55]'
+                  ? 'text-white/80'
+                  : 'text-[#6B5B55]'
                   }`}
                 aria-live="polite"
                 aria-atomic="true"
