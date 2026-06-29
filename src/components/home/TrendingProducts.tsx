@@ -6,6 +6,7 @@ import { useProductStore } from '@/store';
 import { useContentStore } from '@/store/contentStore';
 import { useAutoScroll } from './useAutoScroll';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { BRAND } from '@/config/brandingConfig';
 
 export const TrendingProducts: React.FC = () => {
     const { products, fetchProducts } = useProductStore();
@@ -26,7 +27,7 @@ export const TrendingProducts: React.FC = () => {
     useEffect(() => { fetchProducts(); }, []);
 
     return (
-        <section className="py-8 md:py-12 overflow-hidden" style={{ backgroundColor: '#F3E5E1' }}>
+        <section className="py-8 md:py-12 overflow-hidden" style={{ backgroundColor: BRAND.colors.blushLight }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <FadeIn>
                     <SectionHeader title={content.trendingTitle} subtitle={content.trendingSubtitle} />
@@ -34,7 +35,7 @@ export const TrendingProducts: React.FC = () => {
             </div>
 
             {trending.length === 0 ? (
-                <div className="text-center py-16 text-[#6B5B55]">
+                <div className="text-center py-16 text-warm-gray">
                     <p>No trending products yet. Mark products as "Trending" in the admin panel.</p>
                 </div>
             ) : (
@@ -74,7 +75,7 @@ export const TrendingProducts: React.FC = () => {
 
                                     {/* Text below photo */}
                                     <div className="pt-3 px-1">
-                                        <p className="text-xs text-[#6B5B55] mb-0.5">{product.category}</p>
+                                        <p className="text-xs text-warm-gray mb-0.5">{product.category}</p>
                                         <h3 className="text-sm font-medium text-charcoal mb-1 line-clamp-1 group-hover:text-rose-gold transition-colors">
                                             {product.name}
                                         </h3>

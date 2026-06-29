@@ -5,6 +5,7 @@ import { FadeIn, SectionHeader } from '@/components/ui';
 import { useCategoryStore } from '@/store';
 import { useAutoScroll } from './useAutoScroll';
 import { useProductStore } from '@/store';
+import { BRAND } from '@/config/brandingConfig';
 
 export const CategoryShowcase: React.FC = () => {
     const navigate = useNavigate();
@@ -28,7 +29,7 @@ export const CategoryShowcase: React.FC = () => {
     );
 
     return (
-        <section className="py-8 md:py-12 overflow-hidden" style={{ backgroundColor: '#EFE7E2' }}>
+        <section className="py-8 md:py-12 overflow-hidden" style={{ backgroundColor: BRAND.colors.blushLight }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <FadeIn>
                     <SectionHeader
@@ -39,7 +40,7 @@ export const CategoryShowcase: React.FC = () => {
             </div>
 
             {categories.length === 0 ? (
-                <div className="text-center py-16 text-[#6B5B55]">
+                <div className="text-center py-16 text-warm-gray">
                     <p>No categories yet.</p>
                 </div>
             ) : (
@@ -80,7 +81,7 @@ export const CategoryShowcase: React.FC = () => {
                                         <h3 className="heading-serif text-base md:text-lg font-semibold text-charcoal mb-0.5 group-hover:text-rose-gold transition-colors">
                                             {category.name}
                                         </h3>
-                                        <p className="text-xs text-[#6B5B55]">{category.productCount || 0} products</p>
+                                        <p className="text-xs text-warm-gray">{category.productCount || 0} products</p>
                                     </div>
                                 </div>
                             ))}

@@ -6,6 +6,7 @@ import { useProductStore } from '@/store';
 import { useContentStore } from '@/store/contentStore';
 import { useAutoScroll } from './useAutoScroll';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { BRAND } from '@/config/brandingConfig';
 
 export const NewArrivals: React.FC = () => {
     const { products, fetchProducts } = useProductStore();
@@ -31,7 +32,7 @@ export const NewArrivals: React.FC = () => {
     const subtitle = section?.subtitle || '';
     const buttonUrl = section?.buttonUrl || '';
     const emptyMsg = section?.emptyMessage || '';
-    const bgColor = section?.backgroundColor || '#FAF7F3';
+    const bgColor = section?.backgroundColor || BRAND.colors.softBg;
 
     /* ── If admin set a buttonUrl the entire header becomes a link ── */
     const handleHeaderClick = () => {
@@ -66,7 +67,7 @@ export const NewArrivals: React.FC = () => {
 
             {newItems.length === 0 ? (
                 emptyMsg ? (
-                    <div className="text-center py-16 text-[#6B5B55]">
+                    <div className="text-center py-16 text-warm-gray">
                         <p>{emptyMsg}</p>
                     </div>
                 ) : null
@@ -107,7 +108,7 @@ export const NewArrivals: React.FC = () => {
 
                                     {/* Text below photo */}
                                     <div className="pt-3 px-1">
-                                        <p className="text-xs text-[#6B5B55] mb-0.5">{product.category}</p>
+                                        <p className="text-xs text-warm-gray mb-0.5">{product.category}</p>
                                         <h3 className="text-sm font-medium text-charcoal mb-1 line-clamp-1 group-hover:text-rose-gold transition-colors">
                                             {product.name}
                                         </h3>

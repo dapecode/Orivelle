@@ -930,10 +930,10 @@ export const ProductDetailPage: React.FC = () => {
                               width: 32, height: 32,
                               borderRadius: '50%',
                               ...(isGradient ? { background: resolvedBg } : { backgroundColor: resolvedBg }),
-                              border: isSelected ? '3px solid #B07D6B' : '2px solid rgba(0,0,0,0.12)',
+                              border: isSelected ? `3px solid ${BRAND.colors.primary}` : '2px solid rgba(0,0,0,0.12)',
                               transform: isSelected ? 'scale(1.18)' : 'scale(1)',
                               boxShadow: isSelected
-                                ? '0 0 0 2px white, 0 0 0 4px #B07D6B'
+                                ? `0 0 0 2px white, 0 0 0 4px ${BRAND.colors.primary}`
                                 : '0 1px 3px rgba(0,0,0,0.15)',
                               cursor: 'pointer',
                             }}

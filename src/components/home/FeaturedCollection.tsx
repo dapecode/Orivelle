@@ -5,6 +5,7 @@ import { FadeIn, SectionHeader, PriceDisplay, Badge, Button } from '@/components
 import { useProductStore } from '@/store';
 import { useContentStore } from '@/store/contentStore';
 import { getOptimizedImageUrl } from '@/lib/cloudinary';
+import { BRAND } from '@/config/brandingConfig';
 
 export const FeaturedCollection: React.FC = () => {
     const { products, fetchProducts } = useProductStore();
@@ -16,7 +17,7 @@ export const FeaturedCollection: React.FC = () => {
     const featured = products.filter((p) => p.isFeatured);
 
     return (
-        <section className="py-12 md:py-16" style={{ backgroundColor: '#F7EFEA' }}>
+        <section className="py-12 md:py-16" style={{ backgroundColor: BRAND.colors.softBg }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <FadeIn>
                     <SectionHeader
@@ -26,7 +27,7 @@ export const FeaturedCollection: React.FC = () => {
                 </FadeIn>
 
                 {featured.length === 0 ? (
-                    <div className="text-center py-16 text-[#6B5B55]">
+                    <div className="text-center py-16 text-warm-gray">
                         <p>No featured products yet. Mark products as "Featured" in the admin panel.</p>
                     </div>
                 ) : (
@@ -64,7 +65,7 @@ export const FeaturedCollection: React.FC = () => {
                                         ) : (
                                             <div
                                                 className="absolute inset-0"
-                                                style={{ backgroundColor: '#E8D5CC' }}
+                                                style={{ backgroundColor: BRAND.colors.blush }}
                                             />
                                         )}
 
@@ -77,7 +78,7 @@ export const FeaturedCollection: React.FC = () => {
 
                                     {/* Text below photo */}
                                     <div className="pt-3 px-1">
-                                        <p className="text-xs text-[#6B5B55] mb-0.5">{product.category}</p>
+                                        <p className="text-xs text-warm-gray mb-0.5">{product.category}</p>
                                         <h3 className="text-sm font-medium text-charcoal mb-1 line-clamp-1 group-hover:text-rose-gold transition-colors">
                                             {product.name}
                                         </h3>
@@ -99,7 +100,7 @@ export const FeaturedCollection: React.FC = () => {
                         <Button
                             variant="outline"
                             onClick={() => navigate('/shop?featured=true')}
-                            style={{ borderColor: '#B87A5D', color: '#B87A5D' }}
+                            style={{ borderColor: BRAND.colors.primary, color: BRAND.colors.primary }}
                         >
                             See All Featured Collection <ArrowRight size={16} />
                         </Button>

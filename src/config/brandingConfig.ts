@@ -42,6 +42,7 @@ export type ThemeName =
     | 'Ocean Teal'
     | 'Emerald'
     | 'Crimson'
+    | 'Black & White'
     | 'Custom';
 
 // ─── Theme presets ────────────────────────────────────────────────────────────
@@ -112,6 +113,19 @@ export const THEMES: Record<ThemeName, BrandColors> = {
         warmGray: '#6B4542',
     },
 
+    /** Pure monochrome — minimalist & high-contrast */
+    'Black & White': {
+        primary: '#000000',
+        primaryLight: '#3A3A3A',
+        primaryDark: '#000000',
+        blush: '#E8E8E8',
+        blushLight: '#F5F5F5',
+        blushDark: '#D4D4D4',
+        softBg: '#FFFFFF',
+        charcoal: '#000000',
+        warmGray: '#5C5C5C',
+    },
+
     /**
      * Custom palette — edit freely.
      * Then set activeTheme: 'Custom' below to use it.
@@ -136,7 +150,7 @@ export const THEMES: Record<ThemeName, BrandColors> = {
 //  ▼▼▼  EDIT THIS SECTION TO REBRAND / RETHEME YOUR STORE  ▼▼▼
 // ══════════════════════════════════════════════════════════════
 
-const ACTIVE_THEME: ThemeName = 'Custom';   // ← change theme here
+const ACTIVE_THEME: ThemeName = 'Black & White';   // ← change theme here
 
 export const BRAND = {
     // ── Brand Identity ────────────────────────────────────────
